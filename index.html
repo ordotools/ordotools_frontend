@@ -18,30 +18,40 @@
         }
 
         .calendar-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            max-width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
         }
 
         .calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
 
         .nav-btn {
             background: #007bff;
             color: white;
             border: none;
-            padding: 10px 16px;
-            border-radius: 6px;
+            padding: 8px 12px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             transition: background 0.2s;
         }
 
@@ -49,9 +59,64 @@
             background: #0056b3;
         }
 
+        .today-btn {
+            background: #28a745;
+        }
+
+        .today-btn:hover {
+            background: #1e7e34;
+        }
+
         .current-month {
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 20px;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        .current-month:hover {
+            color: #007bff;
+        }
+
+        .month-name {
+            font-weight: 700;
+        }
+
+        .year-name {
+            font-weight: 300;
+            margin-left: 8px;
+        }
+
+        .date-picker {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+        }
+
+        .date-picker.show {
+            display: block;
+        }
+
+        .date-picker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .date-picker select {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
         }
 
         /* Desktop Month View */
@@ -60,26 +125,28 @@
             grid-template-columns: repeat(7, 1fr);
             gap: 1px;
             background: #ddd;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
+            flex: 1;
+            min-height: 0;
         }
 
         .day-header {
             background: #333;
             color: white;
-            padding: 15px 10px;
+            padding: 12px 8px;
             text-align: center;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .day-cell {
             background: white;
-            min-height: 120px;
-            padding: 8px;
+            padding: 6px;
             position: relative;
             cursor: pointer;
             transition: background 0.2s;
+            min-height: calc((100vh - 120px) / 6);
         }
 
         .day-cell:hover {
@@ -107,11 +174,11 @@
         /* Mobile 3-Day View */
         .mobile-view {
             display: none;
-            height: 70vh;
+            flex: 1;
             overflow-y: auto;
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .mobile-day {
@@ -168,20 +235,24 @@
             }
 
             .calendar-container {
-                padding: 10px;
+                padding: 8px;
             }
 
             .calendar-header {
-                padding: 15px;
+                padding: 10px 12px;
             }
 
             .current-month {
-                font-size: 20px;
+                font-size: 18px;
             }
 
             .nav-btn {
-                padding: 8px 12px;
+                padding: 6px 10px;
                 font-size: 12px;
+            }
+
+            .nav-controls {
+                gap: 6px;
             }
         }
     </style>
@@ -189,9 +260,24 @@
 <body>
     <div class="calendar-container">
         <div class="calendar-header">
-            <button class="nav-btn" id="prevBtn">← Previous</button>
-            <div class="current-month" id="currentMonth"></div>
-            <button class="nav-btn" id="nextBtn">Next →</button>
+            <div class="nav-controls">
+                <button class="nav-btn" id="prevBtn">← Prev</button>
+                <button class="nav-btn today-btn" id="todayBtn" style="display: none;">Today</button>
+            </div>
+            <div class="current-month" id="currentMonth" style="position: relative;">
+                <span class="month-name" id="monthName"></span>
+                <span class="year-name" id="yearName"></span>
+                <div class="date-picker" id="datePicker">
+                    <div class="date-picker-header">
+                        <select id="monthSelect"></select>
+                        <select id="yearSelect"></select>
+                    </div>
+                    <button class="nav-btn" id="datePickerGo">Go</button>
+                </div>
+            </div>
+            <div class="nav-controls">
+                <button class="nav-btn" id="nextBtn">Next →</button>
+            </div>
         </div>
         
         <div class="desktop-view" id="desktopView">
@@ -212,23 +298,81 @@
             constructor() {
                 this.currentDate = new Date();
                 this.events = new Map(); // Key: YYYY-MM-DD, Value: Array of events
+                this.today = new Date();
+                this.today.setHours(0, 0, 0, 0);
                 this.init();
             }
 
             init() {
+                this.setupDatePicker();
                 this.bindEvents();
                 this.render();
+                this.scrollToTodayOnMobile();
+            }
+
+            setupDatePicker() {
+                const monthSelect = document.getElementById('monthSelect');
+                const yearSelect = document.getElementById('yearSelect');
+                
+                const months = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+                
+                months.forEach((month, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = month;
+                    monthSelect.appendChild(option);
+                });
+                
+                const currentYear = new Date().getFullYear();
+                for (let year = currentYear - 10; year <= currentYear + 10; year++) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearSelect.appendChild(option);
+                }
             }
 
             bindEvents() {
                 document.getElementById('prevBtn').addEventListener('click', () => {
                     this.currentDate.setMonth(this.currentDate.getMonth() - 1);
                     this.render();
+                    this.updateTodayButton();
                 });
 
                 document.getElementById('nextBtn').addEventListener('click', () => {
                     this.currentDate.setMonth(this.currentDate.getMonth() + 1);
                     this.render();
+                    this.updateTodayButton();
+                });
+
+                document.getElementById('todayBtn').addEventListener('click', () => {
+                    this.currentDate = new Date();
+                    this.render();
+                    this.scrollToTodayOnMobile();
+                    this.updateTodayButton();
+                });
+
+                document.getElementById('currentMonth').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleDatePicker();
+                });
+
+                document.getElementById('datePickerGo').addEventListener('click', () => {
+                    const month = parseInt(document.getElementById('monthSelect').value);
+                    const year = parseInt(document.getElementById('yearSelect').value);
+                    this.currentDate = new Date(year, month, 1);
+                    this.render();
+                    this.updateTodayButton();
+                    this.hideDatePicker();
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#currentMonth')) {
+                        this.hideDatePicker();
+                    }
                 });
 
                 // Handle mobile scroll for infinite scrolling
@@ -240,10 +384,51 @@
                 });
             }
 
+            toggleDatePicker() {
+                const datePicker = document.getElementById('datePicker');
+                const monthSelect = document.getElementById('monthSelect');
+                const yearSelect = document.getElementById('yearSelect');
+                
+                monthSelect.value = this.currentDate.getMonth();
+                yearSelect.value = this.currentDate.getFullYear();
+                
+                datePicker.classList.toggle('show');
+            }
+
+            hideDatePicker() {
+                document.getElementById('datePicker').classList.remove('show');
+            }
+
+            updateTodayButton() {
+                const todayBtn = document.getElementById('todayBtn');
+                const isCurrentMonth = this.currentDate.getMonth() === this.today.getMonth() && 
+                                     this.currentDate.getFullYear() === this.today.getFullYear();
+                
+                if (window.innerWidth <= 768) {
+                    // On mobile, show today button if not scrolled to today
+                    todayBtn.style.display = 'block';
+                } else {
+                    // On desktop, show today button if not viewing current month
+                    todayBtn.style.display = isCurrentMonth ? 'none' : 'block';
+                }
+            }
+
+            scrollToTodayOnMobile() {
+                if (window.innerWidth <= 768) {
+                    setTimeout(() => {
+                        const todayElement = document.querySelector('.mobile-day.today');
+                        if (todayElement) {
+                            todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 100);
+                }
+            }
+
             render() {
                 this.renderHeader();
                 this.renderDesktopView();
                 this.renderMobileView();
+                this.updateTodayButton();
             }
 
             renderHeader() {
@@ -251,8 +436,8 @@
                     'January', 'February', 'March', 'April', 'May', 'June',
                     'July', 'August', 'September', 'October', 'November', 'December'
                 ];
-                document.getElementById('currentMonth').textContent = 
-                    `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+                document.getElementById('monthName').textContent = monthNames[this.currentDate.getMonth()];
+                document.getElementById('yearName').textContent = this.currentDate.getFullYear();
             }
 
             renderDesktopView() {
@@ -265,8 +450,7 @@
                 const startDate = new Date(firstDay);
                 startDate.setDate(startDate.getDate() - firstDay.getDay());
 
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
+
 
                 for (let i = 0; i < 42; i++) {
                     const cellDate = new Date(startDate);
@@ -279,7 +463,7 @@
                         dayCell.classList.add('other-month');
                     }
                     
-                    if (cellDate.getTime() === today.getTime()) {
+                    if (cellDate.getTime() === this.today.getTime()) {
                         dayCell.classList.add('today');
                     }
 
@@ -296,9 +480,6 @@
             renderMobileView() {
                 const mobileView = document.getElementById('mobileView');
                 mobileView.innerHTML = '';
-
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
                 
                 // Show 30 days starting from current month
                 const startDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
@@ -310,7 +491,7 @@
                     const mobileDay = document.createElement('div');
                     mobileDay.className = 'mobile-day';
                     
-                    if (cellDate.getTime() === today.getTime()) {
+                    if (cellDate.getTime() === this.today.getTime()) {
                         mobileDay.classList.add('today');
                     }
 
@@ -322,6 +503,9 @@
                     this.renderEvents(mobileDay, cellDate);
                     mobileView.appendChild(mobileDay);
                 }
+                
+                // Scroll to today after rendering
+                setTimeout(() => this.scrollToTodayOnMobile(), 50);
             }
 
             loadMoreMobileDays() {
