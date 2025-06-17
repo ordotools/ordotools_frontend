@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Responsive Calendar</title>
+    <title>Responsive Calendar with API</title>
     <style>
         * {
             margin: 0;
@@ -59,6 +59,11 @@
             background: #0056b3;
         }
 
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
         .today-btn {
             background: #28a745;
         }
@@ -67,11 +72,20 @@
             background: #1e7e34;
         }
 
+        .refresh-btn {
+            background: #17a2b8;
+        }
+
+        .refresh-btn:hover {
+            background: #138496;
+        }
+
         .current-month {
             font-size: 20px;
             cursor: pointer;
             user-select: none;
             transition: color 0.2s;
+            position: relative;
         }
 
         .current-month:hover {
@@ -117,6 +131,28 @@
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 14px;
+        }
+
+        .status-indicator {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-loading {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
         }
 
         /* Desktop Month View */
@@ -224,10 +260,45 @@
             background: #0056b3;
         }
 
+        .event.api-event {
+            background: #28a745;
+        }
+
+        .event.api-event:hover {
+            background: #1e7e34;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .desktop-view {
                 display: none;
+            }
+
+            showOrdoDetails(ordoData, date) {
+                // Create a simple modal or alert with ordo details
+                let details = `Ordo for ${date}:\n\n`;
+                
+                if (ordoData.title || ordoData.name) {
+                    details += `Title: ${ordoData.title || ordoData.name}\n`;
+                }
+                if (ordoData.season) {
+                    details += `Season: ${ordoData.season}\n`;
+                }
+                if (ordoData.rank) {
+                    details += `Rank: ${ordoData.rank}\n`;
+                }
+                if (ordoData.color) {
+                    details += `Liturgical Color: ${ordoData.color}\n`;
+                }
+                if (ordoData.description) {
+                    details += `\nDescription: ${ordoData.description}\n`;
+                }
+                
+                // Log to console for debugging
+                console.log('Ordo Details:', ordoData);
+                
+                // Show alert (you can replace this with a proper modal)
+                alert(details);
             }
             
             .mobile-view {
@@ -276,6 +347,7 @@
                 </div>
             </div>
             <div class="nav-controls">
+                <span class="status-indicator" id="statusIndicator">Ready</span>
                 <button class="nav-btn" id="nextBtn">Next →</button>
             </div>
         </div>
@@ -294,12 +366,15 @@
     </div>
 
     <script>
-        class Calendar {
+        class APICalendar {
             constructor() {
                 this.currentDate = new Date();
                 this.events = new Map(); // Key: YYYY-MM-DD, Value: Array of events
                 this.today = new Date();
                 this.today.setHours(0, 0, 0, 0);
+                // this.apiBaseUrl = 'http://0.0.0.0:8000';
+				this.apiBaseUrl = 'https://api-eky0.onrender.com'
+                this.isLoading = false;
                 this.init();
             }
 
@@ -384,6 +459,220 @@
                 });
             }
 
+            updateStatus(status, type = 'success') {
+                const indicator = document.getElementById('statusIndicator');
+                indicator.textContent = status;
+                indicator.className = `status-indicator status-${type}`;
+            }
+
+            async loadAPIData() {
+                if (this.isLoading) return;
+                
+                this.isLoading = true;
+                this.updateStatus('Loading...', 'loading');
+                
+                try {
+                    // Get all dates that are currently displayed in the calendar
+                    const datesToFetch = this.getDisplayedDates();
+                    let loadedCount = 0;
+                    let corsError = false;
+                    
+                    // First, test if the API is accessible by checking the root endpoint
+                    try {
+                        const testResponse = await fetch(`${this.apiBaseUrl}/`);
+                        if (!testResponse.ok) {
+                            throw new Error(`API test failed: ${testResponse.status}`);
+                        }
+                        console.log('API is accessible');
+                    } catch (error) {
+                        if (error.message.includes('Failed to fetch')) {
+                            corsError = true;
+                            this.updateStatus('CORS Error - API not accessible from browser', 'error');
+                            this.showCORSHelp();
+                            return;
+                        }
+                        throw error;
+                    }
+                    
+                    // Fetch data for each displayed date
+                    for (const dateKey of datesToFetch) {
+                        try {
+                            const response = await fetch(`${this.apiBaseUrl}/day/${dateKey}`, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                },
+                            });
+                            
+                            if (response.ok) {
+                                const ordoData = await response.json();
+                                console.log(`Day data loaded for ${dateKey}:`, ordoData);
+                                
+                                // Process this single day's data
+                                const events = this.extractEventsFromOrdo(ordoData, dateKey);
+                                events.forEach(event => {
+                                    this.addEvent(dateKey, {
+                                        ...event,
+                                        apiEvent: true
+                                    });
+                                });
+                                loadedCount++;
+                            } else {
+                                console.warn(`No data for ${dateKey}: ${response.status}`);
+                            }
+                        } catch (error) {
+                            if (error.message.includes('Failed to fetch')) {
+                                corsError = true;
+                                break;
+                            }
+                            console.error(`Failed to load data for ${dateKey}:`, error);
+                        }
+                    }
+                    
+                    if (corsError) {
+                        this.updateStatus('CORS Error - See console for help', 'error');
+                        this.showCORSHelp();
+                    } else {
+                        this.updateStatus(`${loadedCount} days loaded`, 'success');
+                    }
+                    this.render();
+                } catch (error) {
+                    console.error('API Error:', error);
+                    this.updateStatus('API Error', 'error');
+                } finally {
+                    this.isLoading = false;
+                }
+            }
+
+            showCORSHelp() {
+                console.log('🚫 CORS Error - API Not Accessible');
+                console.log('The browser is blocking requests to your API due to CORS (Cross-Origin Resource Sharing) policy.');
+                console.log('');
+                console.log('💡 Solutions:');
+                console.log('1. Add CORS headers to your API server:');
+                console.log('   - Access-Control-Allow-Origin: *');
+                console.log('   - Access-Control-Allow-Methods: GET, POST, OPTIONS');
+                console.log('   - Access-Control-Allow-Headers: Content-Type');
+                console.log('');
+                console.log('2. If using Express.js, add this to your server:');
+                console.log('   app.use((req, res, next) => {');
+                console.log('     res.header("Access-Control-Allow-Origin", "*");');
+                console.log('     res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");');
+                console.log('     res.header("Access-Control-Allow-Headers", "Content-Type");');
+                console.log('     next();');
+                console.log('   });');
+                console.log('');
+                console.log('3. Test your API directly: ' + this.apiBaseUrl);
+                console.log('4. Check if API works in Postman or curl (these don\'t have CORS restrictions)');
+            }
+
+            getDisplayedDates() {
+                const dates = [];
+                const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+                const startDate = new Date(firstDay);
+                startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+                // Get all 42 dates displayed in the calendar grid (6 weeks)
+                for (let i = 0; i < 42; i++) {
+                    const cellDate = new Date(startDate);
+                    cellDate.setDate(startDate.getDate() + i);
+                    dates.push(this.formatDateKey(cellDate));
+                }
+
+                return dates;
+            }
+
+            processOrdoData(monthData) {
+                // This method is no longer used since we fetch individual days
+                // Keeping for backward compatibility
+            }
+
+            extractEventsFromOrdo(ordoData, dateKey) {
+                // Return exactly one event per date
+                if (!ordoData) {
+                    return [{
+                        title: 'No Ordo Data',
+                        color: '#6c757d',
+                        date: dateKey
+                    }];
+                }
+
+                // Determine the primary liturgical information for this date
+                let title = 'Liturgical Day';
+                let color = '#28a745'; // Default green
+
+                // Priority order: liturgy > title > name > season
+                if (ordoData.liturgy) {
+                    title = ordoData.liturgy;
+                } else if (ordoData.title) {
+                    title = ordoData.title;
+                } else if (ordoData.name) {
+                    title = ordoData.name;
+                } else if (ordoData.season) {
+                    title = ordoData.season;
+                } else if (typeof ordoData === 'string') {
+                    title = ordoData;
+                }
+
+                // Get liturgical color
+                color = this.getLiturgicalColor(ordoData);
+
+                // Return single event for this date
+                return [{
+                    title: title,
+                    color: color,
+                    date: dateKey,
+                    ordoData: ordoData
+                }];
+            }
+
+            getLiturgicalColor(data) {
+                // Map liturgical seasons/ranks to colors
+                const season = (data.season || '').toLowerCase();
+                const rank = (data.rank || '').toLowerCase();
+                const color = (data.color || '').toLowerCase();
+
+                // Direct color mapping
+                if (color === 'red') return '#dc3545';
+                if (color === 'white') return '#f8f9fa';
+                if (color === 'green') return '#28a745';
+                if (color === 'purple' || color === 'violet') return '#6f42c1';
+                if (color === 'rose' || color === 'pink') return '#e83e8c';
+                if (color === 'gold') return '#ffc107';
+
+                // Season-based colors
+                if (season.includes('advent')) return '#6f42c1';
+                if (season.includes('christmas')) return '#f8f9fa';
+                if (season.includes('lent')) return '#6f42c1';
+                if (season.includes('easter')) return '#f8f9fa';
+                if (season.includes('ordinary')) return '#28a745';
+
+                // Rank-based colors
+                if (rank.includes('solemnity')) return '#ffc107';
+                if (rank.includes('feast')) return '#f8f9fa';
+                if (rank.includes('memorial')) return '#dc3545';
+
+                // Default
+                return '#28a745';
+            }
+
+            isValidDate(dateString) {
+                const date = new Date(dateString);
+                return date instanceof Date && !isNaN(date.getTime());
+            }
+
+            clearAPIEvents() {
+                // Remove only API events, keep manual events
+                this.events.forEach((eventList, dateKey) => {
+                    this.events.set(dateKey, eventList.filter(event => !event.apiEvent));
+                    if (this.events.get(dateKey).length === 0) {
+                        this.events.delete(dateKey);
+                    }
+                });
+            }
+
+
+
             toggleDatePicker() {
                 const datePicker = document.getElementById('datePicker');
                 const monthSelect = document.getElementById('monthSelect');
@@ -405,10 +694,8 @@
                                      this.currentDate.getFullYear() === this.today.getFullYear();
                 
                 if (window.innerWidth <= 768) {
-                    // On mobile, show today button if not scrolled to today
                     todayBtn.style.display = 'block';
                 } else {
-                    // On desktop, show today button if not viewing current month
                     todayBtn.style.display = isCurrentMonth ? 'none' : 'block';
                 }
             }
@@ -429,6 +716,9 @@
                 this.renderDesktopView();
                 this.renderMobileView();
                 this.updateTodayButton();
+                
+                // Load API data after calendar is built
+                this.loadAPIData();
             }
 
             renderHeader() {
@@ -446,11 +736,8 @@
                 existingCells.forEach(cell => cell.remove());
 
                 const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
-                const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
                 const startDate = new Date(firstDay);
                 startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-
 
                 for (let i = 0; i < 42; i++) {
                     const cellDate = new Date(startDate);
@@ -481,7 +768,6 @@
                 const mobileView = document.getElementById('mobileView');
                 mobileView.innerHTML = '';
                 
-                // Show 30 days starting from current month
                 const startDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
                 
                 for (let i = 0; i < 30; i++) {
@@ -504,7 +790,6 @@
                     mobileView.appendChild(mobileDay);
                 }
                 
-                // Scroll to today after rendering
                 setTimeout(() => this.scrollToTodayOnMobile(), 50);
             }
 
@@ -513,11 +798,9 @@
                 const lastDay = mobileView.lastElementChild;
                 if (!lastDay) return;
 
-                // Get the date of the last rendered day
                 const lastDate = new Date(this.currentDate);
                 lastDate.setDate(lastDate.getDate() + mobileView.children.length);
 
-                // Add 15 more days
                 for (let i = 0; i < 15; i++) {
                     const cellDate = new Date(lastDate);
                     cellDate.setDate(lastDate.getDate() + i);
@@ -547,11 +830,18 @@
                 
                 dayEvents.forEach(event => {
                     const eventElement = document.createElement('div');
-                    eventElement.className = 'event';
+                    eventElement.className = `event ${event.apiEvent ? 'api-event' : ''}`;
                     eventElement.textContent = event.title;
-                    eventElement.style.backgroundColor = event.color || '#007bff';
+                    eventElement.style.backgroundColor = event.color || (event.apiEvent ? '#28a745' : '#007bff');
                     eventElement.addEventListener('click', () => {
-                        if (event.onClick) event.onClick(event);
+                        if (event.onClick) {
+                            event.onClick(event);
+                        } else if (event.apiEvent && event.ordoData) {
+                            // Show ordo details
+                            this.showOrdoDetails(event.ordoData, event.date);
+                        } else {
+                            console.log('Event clicked:', event);
+                        }
                     });
                     container.appendChild(eventElement);
                 });
@@ -571,7 +861,7 @@
                 this.render();
             }
 
-            // Public API for adding multiple events (e.g., from server)
+            // Public API for adding multiple events
             addEvents(eventsData) {
                 eventsData.forEach(eventData => {
                     this.addEvent(eventData.date, {
@@ -590,29 +880,32 @@
         }
 
         // Initialize calendar
-        const calendar = new Calendar();
+        const calendar = new APICalendar();
 
-        // Example usage - add some sample events
+        // Add some manual events for testing
         calendar.addEvents([
             {
                 date: '2025-06-20',
                 title: 'Team Meeting',
-                color: '#28a745'
+                color: '#007bff'
             },
             {
                 date: '2025-06-22',
                 title: 'Project Deadline',
                 color: '#dc3545'
-            },
-            {
-                date: '2025-06-25',
-                title: 'Client Call',
-                color: '#ffc107'
             }
         ]);
 
-        // Expose calendar globally for easy access
+        // Expose calendar globally
         window.calendar = calendar;
+
+        // Log API integration info
+        console.log('Calendar initialized with Ordo API integration');
+        console.log('API Base URL:', calendar.apiBaseUrl);
+        console.log('Available methods:');
+        console.log('- calendar.loadAPIData() - Refresh current month');
+        console.log('- Click on green events to see ordo details');
+        console.log('- Check network tab to see API calls to /month/{year}/{month}');
     </script>
 </body>
 </html>
