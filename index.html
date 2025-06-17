@@ -290,6 +290,12 @@
                 if (ordoData.color) {
                     details += `Liturgical Color: ${ordoData.color}\n`;
                 }
+                if (ordoData.celebration) {
+                    details += `Celebration: ${ordoData.celebration}\n`;
+                }
+                if (ordoData.liturgy) {
+                    details += `Liturgy: ${ordoData.liturgy}\n`;
+                }
                 if (ordoData.description) {
                     details += `\nDescription: ${ordoData.description}\n`;
                 }
@@ -370,10 +376,10 @@
             constructor() {
                 this.currentDate = new Date();
                 this.events = new Map(); // Key: YYYY-MM-DD, Value: Array of events
+                this.ordoCache = new Map(); // Key: year, Value: full year data
                 this.today = new Date();
                 this.today.setHours(0, 0, 0, 0);
-                // this.apiBaseUrl = 'http://0.0.0.0:8000';
-				this.apiBaseUrl = 'https://api-eky0.onrender.com'
+                this.apiBaseUrl = 'https://api-eky0.onrender.com';
                 this.isLoading = false;
                 this.init();
             }
@@ -472,75 +478,74 @@
                 this.updateStatus('Loading...', 'loading');
                 
                 try {
-                    // Get all dates that are currently displayed in the calendar
-                    const datesToFetch = this.getDisplayedDates();
+                    const currentYear = this.currentDate.getFullYear();
+                    
+                    // Check if we have cached data for this year
+                    if (!this.ordoCache.has(currentYear)) {
+                        await this.loadYearData(currentYear);
+                    }
+                    
+                    // Get displayed dates and populate from cache
+                    const datesToShow = this.getDisplayedDates();
+                    const yearData = this.ordoCache.get(currentYear) || {};
                     let loadedCount = 0;
-                    let corsError = false;
                     
-                    // First, test if the API is accessible by checking the root endpoint
-                    try {
-                        const testResponse = await fetch(`${this.apiBaseUrl}/`);
-                        if (!testResponse.ok) {
-                            throw new Error(`API test failed: ${testResponse.status}`);
-                        }
-                        console.log('API is accessible');
-                    } catch (error) {
-                        if (error.message.includes('Failed to fetch')) {
-                            corsError = true;
-                            this.updateStatus('CORS Error - API not accessible from browser', 'error');
-                            this.showCORSHelp();
-                            return;
-                        }
-                        throw error;
-                    }
+                    // Clear existing API events for these dates
+                    this.clearAPIEvents();
                     
-                    // Fetch data for each displayed date
-                    for (const dateKey of datesToFetch) {
-                        try {
-                            const response = await fetch(`${this.apiBaseUrl}/day/${dateKey}`, {
-                                method: 'GET',
-                                headers: {
-                                    'Accept': 'application/json',
-                                },
-                            });
-                            
-                            if (response.ok) {
-                                const ordoData = await response.json();
-                                console.log(`Day data loaded for ${dateKey}:`, ordoData);
-                                
-                                // Process this single day's data
-                                const events = this.extractEventsFromOrdo(ordoData, dateKey);
-                                events.forEach(event => {
-                                    this.addEvent(dateKey, {
-                                        ...event,
-                                        apiEvent: true
-                                    });
+                    datesToShow.forEach(dateKey => {
+                        if (yearData[dateKey]) {
+                            const events = this.extractEventsFromOrdo(yearData[dateKey], dateKey);
+                            events.forEach(event => {
+                                this.addEvent(dateKey, {
+                                    ...event,
+                                    apiEvent: true
                                 });
-                                loadedCount++;
-                            } else {
-                                console.warn(`No data for ${dateKey}: ${response.status}`);
-                            }
-                        } catch (error) {
-                            if (error.message.includes('Failed to fetch')) {
-                                corsError = true;
-                                break;
-                            }
-                            console.error(`Failed to load data for ${dateKey}:`, error);
+                            });
+                            loadedCount++;
                         }
-                    }
+                    });
                     
-                    if (corsError) {
-                        this.updateStatus('CORS Error - See console for help', 'error');
-                        this.showCORSHelp();
-                    } else {
-                        this.updateStatus(`${loadedCount} days loaded`, 'success');
-                    }
+                    this.updateStatus(`${loadedCount} days loaded from cache`, 'success');
                     this.render();
                 } catch (error) {
                     console.error('API Error:', error);
                     this.updateStatus('API Error', 'error');
                 } finally {
                     this.isLoading = false;
+                }
+            }
+
+            async loadYearData(year) {
+                this.updateStatus(`Loading ${year} data...`, 'loading');
+                
+                try {
+                    // First, test if the API is accessible
+                    const testResponse = await fetch(`${this.apiBaseUrl}/`);
+                    if (!testResponse.ok) {
+                        throw new Error(`API test failed: ${testResponse.status}`);
+                    }
+                    
+                    // Load full year data
+                    const response = await fetch(`${this.apiBaseUrl}/year/${year}`);
+                    
+                    if (response.ok) {
+                        const yearData = await response.json();
+                        console.log(`Year ${year} data loaded:`, Object.keys(yearData).length, 'days');
+                        
+                        // Cache the year data
+                        this.ordoCache.set(year, yearData);
+                        
+                        return yearData;
+                    } else {
+                        throw new Error(`Year API returned ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    if (error.message.includes('Failed to fetch')) {
+                        this.updateStatus('CORS Error - API not accessible from browser', 'error');
+                        this.showCORSHelp();
+                    }
+                    throw error;
                 }
             }
 
@@ -591,27 +596,31 @@
                 // Return exactly one event per date
                 if (!ordoData) {
                     return [{
-                        title: 'No Ordo Data',
+                        title: 'No Data',
                         color: '#6c757d',
                         date: dateKey
                     }];
                 }
 
                 // Determine the primary liturgical information for this date
-                let title = 'Liturgical Day';
+                let title = 'Ordo Data';
                 let color = '#28a745'; // Default green
 
-                // Priority order: liturgy > title > name > season
-                if (ordoData.liturgy) {
-                    title = ordoData.liturgy;
-                } else if (ordoData.title) {
+                // Priority order: title > name > liturgy > season > celebration
+                if (ordoData.title) {
                     title = ordoData.title;
                 } else if (ordoData.name) {
                     title = ordoData.name;
+                } else if (ordoData.liturgy) {
+                    title = ordoData.liturgy;
+                } else if (ordoData.celebration) {
+                    title = ordoData.celebration;
                 } else if (ordoData.season) {
                     title = ordoData.season;
                 } else if (typeof ordoData === 'string') {
                     title = ordoData;
+                } else if (ordoData.rank) {
+                    title = ordoData.rank;
                 }
 
                 // Get liturgical color
@@ -881,20 +890,6 @@
 
         // Initialize calendar
         const calendar = new APICalendar();
-
-        // Add some manual events for testing
-        calendar.addEvents([
-            {
-                date: '2025-06-20',
-                title: 'Team Meeting',
-                color: '#007bff'
-            },
-            {
-                date: '2025-06-22',
-                title: 'Project Deadline',
-                color: '#dc3545'
-            }
-        ]);
 
         // Expose calendar globally
         window.calendar = calendar;
