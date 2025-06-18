@@ -1,0 +1,8 @@
+services:
+  - type: static_site
+    name: ordo-calendar-frontend
+    buildCommand: "echo 'No build needed for static HTML'"
+    staticPublishPath: .
+    envVars:
+      - key: API_URL
+        value: https://api-eky0.onrender.com
