@@ -16,6 +16,10 @@ class APICalendar {
      */
     init() {
         this.bindEvents();
+        
+        // Initialize keyboard navigation
+        this.keyboardNav = new KeyboardNavigation(this);
+        
         this.render();
         this.uiManager.scrollToTodayOnMobile();
         console.log(`📅 Calendar initialized in ${ENV} mode`);
@@ -46,60 +50,60 @@ class APICalendar {
      * Bind all event handlers
      */
     bindEvents() {
-        // Navigation buttons
-        document.getElementById('prevBtn').addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-            this.render();
-            this.uiManager.updateTodayButton(this.currentDate);
-        });
+        try {
+            // Navigation buttons - with safe access
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const todayBtn = document.getElementById('todayBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const mobileView = document.getElementById('mobileView');
 
-        document.getElementById('nextBtn').addEventListener('click', () => {
-            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
-            this.render();
-            this.uiManager.updateTodayButton(this.currentDate);
-        });
-
-        document.getElementById('todayBtn').addEventListener('click', () => {
-            this.currentDate = new Date();
-            this.render();
-            this.uiManager.scrollToTodayOnMobile();
-            this.uiManager.updateTodayButton(this.currentDate);
-        });
-
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            this.apiClient.clearCache();
-            this.loadAPIData();
-        });
-
-        // Date picker
-        document.getElementById('currentMonth').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.uiManager.toggleDatePicker(this.currentDate);
-        });
-
-        document.getElementById('datePickerGo').addEventListener('click', () => {
-            const month = parseInt(document.getElementById('monthSelect').value);
-            const year = parseInt(document.getElementById('yearSelect').value);
-            this.currentDate = new Date(year, month, 1);
-            this.render();
-            this.uiManager.updateTodayButton(this.currentDate);
-            this.uiManager.hideDatePicker();
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('#currentMonth')) {
-                this.uiManager.hideDatePicker();
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+                    this.render();
+                    this.uiManager.updateTodayButton(this.currentDate);
+                });
             }
-        });
 
-        // Mobile infinite scroll
-        const mobileView = document.getElementById('mobileView');
-        mobileView.addEventListener('scroll', () => {
-            if (mobileView.scrollTop + mobileView.clientHeight >= mobileView.scrollHeight - 100) {
-                this.uiManager.loadMoreMobileDays(this.currentDate);
-                this.uiManager.renderEvents(this.events);
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+                    this.render();
+                    this.uiManager.updateTodayButton(this.currentDate);
+                });
             }
-        });
+
+            if (todayBtn) {
+                todayBtn.addEventListener('click', () => {
+                    this.currentDate = new Date();
+                    this.render();
+                    this.uiManager.scrollToTodayOnMobile();
+                    this.uiManager.updateTodayButton(this.currentDate);
+                });
+            }
+
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    this.apiClient.clearCache();
+                    this.loadAPIData();
+                });
+            }
+
+            // Mobile infinite scroll
+            if (mobileView) {
+                mobileView.addEventListener('scroll', () => {
+                    if (mobileView.scrollTop + mobileView.clientHeight >= mobileView.scrollHeight - 100) {
+                        this.uiManager.loadMoreMobileDays(this.currentDate);
+                        this.uiManager.renderEvents(this.events);
+                    }
+                });
+            }
+
+            console.log('✅ Event handlers bound successfully');
+        } catch (error) {
+            console.error('❌ Error binding events:', error);
+        }
     }
 
     /**
@@ -225,7 +229,8 @@ class APICalendar {
             apiUrl: this.apiClient.apiBaseUrl,
             eventsCount: this.events.size,
             cacheInfo: cacheInfo,
-            currentDate: this.uiManager.formatDateKey(this.currentDate)
+            currentDate: this.uiManager.formatDateKey(this.currentDate),
+            keyboardNavigation: this.keyboardNav ? 'enabled' : 'disabled'
         };
         
         console.log('🔍 Calendar Debug Info:', debugInfo);
@@ -243,17 +248,26 @@ class APICalendar {
 
 // Initialize calendar when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize calendar
-    const calendar = new APICalendar();
+    try {
+        // Initialize calendar
+        const calendar = new APICalendar();
 
-    // Expose calendar globally for debugging
-    window.calendar = calendar;
+        // Expose calendar globally for debugging
+        window.calendar = calendar;
 
-    // Console helpers
-    console.log('📅 Calendar initialized');
-    console.log('🔧 Debug methods available:');
-    console.log('  - calendar.debugAPI() - Show debug info');
-    console.log('  - calendar.testAPI() - Test API connection');
-    console.log('  - calendar.loadAPIData() - Refresh calendar data');
-    console.log('  - calendar.clearEvents() - Clear all events');
+        // Console helpers
+        console.log('📅 Calendar initialized');
+        console.log('🔧 Debug methods available:');
+        console.log('  - calendar.debugAPI() - Show debug info');
+        console.log('  - calendar.testAPI() - Test API connection');
+        console.log('  - calendar.loadAPIData() - Refresh calendar data');
+        console.log('  - calendar.clearEvents() - Clear all events');
+        console.log('⌨️ Keyboard shortcuts:');
+        console.log('  - ←/→ or H/L: Change month');
+        console.log('  - ↑/↓ or J/K: Change year');
+        console.log('  - T: Today, R: Refresh, G: Today (Vim)');
+    } catch (error) {
+        console.error('❌ Failed to initialize calendar:', error);
+        console.error('Stack trace:', error.stack);
+    }
 });

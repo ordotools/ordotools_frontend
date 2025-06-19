@@ -6,7 +6,6 @@ class UIManager {
         this.today = new Date();
         this.today.setHours(0, 0, 0, 0);
         this.setupEnvironmentIndicator();
-        this.setupDatePicker();
         this.setupModal();
     }
 
@@ -17,34 +16,6 @@ class UIManager {
         const envIndicator = document.getElementById('envIndicator');
         envIndicator.textContent = ENV === 'development' ? 'DEV' : 'PROD';
         envIndicator.className = `env-indicator env-${ENV}`;
-    }
-
-    /**
-     * Setup date picker dropdowns
-     */
-    setupDatePicker() {
-        const monthSelect = document.getElementById('monthSelect');
-        const yearSelect = document.getElementById('yearSelect');
-        
-        const months = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        
-        months.forEach((month, index) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = month;
-            monthSelect.appendChild(option);
-        });
-        
-        const currentYear = new Date().getFullYear();
-        for (let year = currentYear - 10; year <= currentYear + 10; year++) {
-            const option = document.createElement('option');
-            option.value = year;
-            option.textContent = year;
-            yearSelect.appendChild(option);
-        }
     }
 
     /**
@@ -87,6 +58,21 @@ class UIManager {
     }
 
     /**
+     * Calculate optimal number of weeks to display
+     */
+    calculateWeeksNeeded(currentDate) {
+        const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        
+        const startOffset = firstDay.getDay(); // Days from Sunday to first day
+        const daysInMonth = lastDay.getDate();
+        const totalCells = startOffset + daysInMonth;
+        
+        // Need 6 weeks if we have more than 35 cells, otherwise 5 weeks
+        return totalCells > 35 ? 6 : 5;
+    }
+
+    /**
      * Render desktop calendar view
      */
     renderDesktopView(currentDate) {
@@ -94,11 +80,17 @@ class UIManager {
         const existingCells = desktopView.querySelectorAll('.day-cell');
         existingCells.forEach(cell => cell.remove());
 
+        const weeksNeeded = this.calculateWeeksNeeded(currentDate);
+        const totalCells = weeksNeeded * 7;
+
+        // Add CSS class based on number of weeks
+        desktopView.className = `desktop-view ${weeksNeeded === 5 ? 'five-weeks' : 'six-weeks'}`;
+
         const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
 
-        for (let i = 0; i < 42; i++) {
+        for (let i = 0; i < totalCells; i++) {
             const cellDate = new Date(startDate);
             cellDate.setDate(startDate.getDate() + i);
             
@@ -114,10 +106,30 @@ class UIManager {
                 dayCell.classList.add('today');
             }
 
+            // Create header section with date, feast text, and color indicator
+            const headerSection = document.createElement('div');
+            headerSection.className = 'day-header-section';
+
+            const headerContent = document.createElement('div');
+            headerContent.className = 'day-header-content';
+
             const dayNumber = document.createElement('div');
             dayNumber.className = 'day-number';
             dayNumber.textContent = cellDate.getDate();
-            dayCell.appendChild(dayNumber);
+
+            const feastText = document.createElement('div');
+            feastText.className = 'feast-text';
+            feastText.textContent = ''; // Will be populated by API
+
+            const colorIndicator = document.createElement('div');
+            colorIndicator.className = 'liturgical-color';
+            colorIndicator.style.backgroundColor = '#28a745'; // Default green, will be updated by API
+
+            headerContent.appendChild(dayNumber);
+            headerContent.appendChild(feastText);
+            headerSection.appendChild(headerContent);
+            headerSection.appendChild(colorIndicator);
+            dayCell.appendChild(headerSection);
 
             desktopView.appendChild(dayCell);
         }
@@ -144,10 +156,32 @@ class UIManager {
                 mobileDay.classList.add('today');
             }
 
+            // Create header section with date, feast text, and color indicator
+            const headerSection = document.createElement('div');
+            headerSection.className = 'day-header-section';
+            headerSection.style.margin = '-15px -15px 10px -15px';
+            headerSection.style.padding = '8px 15px';
+
+            const headerContent = document.createElement('div');
+            headerContent.className = 'day-header-content';
+
             const dayHeader = document.createElement('div');
             dayHeader.className = 'mobile-day-header';
             dayHeader.textContent = this.formatMobileDate(cellDate);
-            mobileDay.appendChild(dayHeader);
+
+            const feastText = document.createElement('div');
+            feastText.className = 'feast-text';
+            feastText.textContent = ''; // Will be populated by API
+
+            const colorIndicator = document.createElement('div');
+            colorIndicator.className = 'liturgical-color';
+            colorIndicator.style.backgroundColor = '#28a745'; // Default green, will be updated by API
+
+            headerContent.appendChild(dayHeader);
+            headerContent.appendChild(feastText);
+            headerSection.appendChild(headerContent);
+            headerSection.appendChild(colorIndicator);
+            mobileDay.appendChild(headerSection);
 
             mobileView.appendChild(mobileDay);
         }
@@ -172,10 +206,32 @@ class UIManager {
             mobileDay.className = 'mobile-day';
             mobileDay.dataset.date = this.formatDateKey(cellDate);
 
+            // Create header section with date, feast text, and color indicator
+            const headerSection = document.createElement('div');
+            headerSection.className = 'day-header-section';
+            headerSection.style.margin = '-15px -15px 10px -15px';
+            headerSection.style.padding = '8px 15px';
+
+            const headerContent = document.createElement('div');
+            headerContent.className = 'day-header-content';
+
             const dayHeader = document.createElement('div');
             dayHeader.className = 'mobile-day-header';
             dayHeader.textContent = this.formatMobileDate(cellDate);
-            mobileDay.appendChild(dayHeader);
+
+            const feastText = document.createElement('div');
+            feastText.className = 'feast-text';
+            feastText.textContent = ''; // Will be populated by API
+
+            const colorIndicator = document.createElement('div');
+            colorIndicator.className = 'liturgical-color';
+            colorIndicator.style.backgroundColor = '#28a745'; // Default green, will be updated by API
+
+            headerContent.appendChild(dayHeader);
+            headerContent.appendChild(feastText);
+            headerSection.appendChild(headerContent);
+            headerSection.appendChild(colorIndicator);
+            mobileDay.appendChild(headerSection);
 
             mobileView.appendChild(mobileDay);
         }
@@ -185,7 +241,7 @@ class UIManager {
      * Render events on calendar
      */
     renderEvents(eventsMap) {
-        // Clear existing events from display
+        // Clear existing events from display (but preserve header sections)
         document.querySelectorAll('.event').forEach(el => el.remove());
         
         // Render events for all visible days
@@ -193,11 +249,26 @@ class UIManager {
             const dateKey = container.dataset.date;
             const dayEvents = eventsMap.get(dateKey) || [];
             
-            dayEvents.forEach(event => {
+            // Update liturgical color indicator and feast text if we have API events
+            const colorIndicator = container.querySelector('.liturgical-color');
+            const feastText = container.querySelector('.feast-text');
+            const apiEvent = dayEvents.find(event => event.apiEvent);
+            
+            if (apiEvent) {
+                if (colorIndicator) {
+                    colorIndicator.style.backgroundColor = apiEvent.color || '#28a745';
+                }
+                if (feastText) {
+                    feastText.textContent = apiEvent.title || '';
+                }
+            }
+            
+            // Only render non-API events as separate event elements
+            dayEvents.filter(event => !event.apiEvent).forEach(event => {
                 const eventElement = document.createElement('div');
-                eventElement.className = `event ${event.apiEvent ? 'api-event' : ''}`;
+                eventElement.className = 'event';
                 eventElement.textContent = event.title;
-                eventElement.style.backgroundColor = event.color || (event.apiEvent ? '#28a745' : '#007bff');
+                
                 eventElement.addEventListener('click', (e) => {
                     e.stopPropagation();
                     this.showEventDetails(event);
@@ -234,24 +305,10 @@ class UIManager {
     }
 
     /**
-     * Show/hide date picker
-     */
-    toggleDatePicker(currentDate) {
-        const datePicker = document.getElementById('datePicker');
-        const monthSelect = document.getElementById('monthSelect');
-        const yearSelect = document.getElementById('yearSelect');
-        
-        monthSelect.value = currentDate.getMonth();
-        yearSelect.value = currentDate.getFullYear();
-        
-        datePicker.classList.toggle('show');
-    }
-
-    /**
-     * Hide date picker
+     * Hide date picker (keeping for compatibility)
      */
     hideDatePicker() {
-        document.getElementById('datePicker').classList.remove('show');
+        // No-op since date picker is removed
     }
 
     /**
@@ -288,12 +345,15 @@ class UIManager {
      */
     getDisplayedDates(currentDate) {
         const dates = [];
+        const weeksNeeded = this.calculateWeeksNeeded(currentDate);
+        const totalCells = weeksNeeded * 7;
+        
         const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
 
-        // Get all 42 dates displayed in the calendar grid (6 weeks)
-        for (let i = 0; i < 42; i++) {
+        // Get all dates displayed in the calendar grid
+        for (let i = 0; i < totalCells; i++) {
             const cellDate = new Date(startDate);
             cellDate.setDate(startDate.getDate() + i);
             dates.push(this.formatDateKey(cellDate));

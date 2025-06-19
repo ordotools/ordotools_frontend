@@ -13,17 +13,9 @@
                 <button class="nav-btn" id="prevBtn">← Prev</button>
                 <button class="nav-btn today-btn" id="todayBtn">Today</button>
             </div>
-            <div class="current-month" id="currentMonth" style="position: relative;">
-                <span class="month-name" id="monthName"></span>
-                <span class="year-name" id="yearName"></span>
+            <div class="current-month" id="currentMonth">
+                <span class="month-name" id="monthName"></span><span class="year-name" id="yearName"></span>
                 <span class="env-indicator" id="envIndicator">DEV</span>
-                <div class="date-picker" id="datePicker">
-                    <div class="date-picker-header">
-                        <select id="monthSelect"></select>
-                        <select id="yearSelect"></select>
-                    </div>
-                    <button class="nav-btn" id="datePickerGo">Go</button>
-                </div>
             </div>
             <div class="nav-controls">
                 <span class="status-indicator" id="statusIndicator">Ready</span>
@@ -56,6 +48,7 @@
     <script src="config.js"></script>
     <script src="api-client.js"></script>
     <script src="ui-manager.js"></script>
+    <script src="keyboard-navigation.js"></script>
     <script src="calendar.js"></script>
 </body>
 </html>
