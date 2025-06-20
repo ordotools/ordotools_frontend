@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f5f5;
+    background: #3a3a3a; /* Slightly lighter dark grey background */
     color: #333;
     user-select: none;
 }
@@ -27,10 +27,11 @@ body {
     align-items: center;
     margin-bottom: 10px;
     background: white;
-    padding: 12px 16px;
+    padding: 8px 12px; /* Reduced padding */
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3); /* Enhanced shadow for contrast */
     flex-shrink: 0;
+    position: relative; /* For absolute positioning of center element */
 }
 
 .nav-controls {
@@ -43,10 +44,10 @@ body {
     background: #007bff;
     color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 6px 10px; /* Reduced padding */
     border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px; /* Slightly smaller font */
     transition: background 0.2s;
 }
 
@@ -76,11 +77,15 @@ body {
 }
 
 .current-month {
-    font-size: 20px;
+    font-size: 18px; /* Slightly smaller to fit better in reduced navigation bar */
     cursor: pointer;
     user-select: none;
     transition: color 0.2s;
-    position: relative;
+    position: absolute; /* Absolute positioning for perfect centering */
+    left: 50%;
+    transform: translateX(-50%); /* Center horizontally */
+    top: 50%;
+    transform: translate(-50%, -50%); /* Center both horizontally and vertically */
 }
 
 .current-month:hover {
@@ -112,9 +117,9 @@ body {
 }
 
 .status-indicator {
-    padding: 4px 8px;
+    padding: 3px 6px; /* Reduced padding */
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 11px; /* Slightly smaller font */
     font-weight: 500;
 }
 
@@ -156,11 +161,12 @@ body {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 1px;
-    background: #ddd;
+    background: #444; /* Darker gap color */
     border-radius: 6px;
     overflow: hidden;
     flex: 1;
     min-height: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3); /* Enhanced shadow for contrast */
 }
 
 .desktop-view.five-weeks {
@@ -172,13 +178,13 @@ body {
 }
 
 .day-header {
-    background: #666;
+    background: #555; /* Darker, less invasive header */
     color: white;
-    padding: 8px;
+    padding: 4px; /* Much smaller padding */
     text-align: center;
     font-weight: 500;
-    font-size: 11px;
-    height: 32px;
+    font-size: 10px; /* Smaller font */
+    height: 20px; /* Much smaller height */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -204,8 +210,8 @@ body {
 }
 
 .day-cell.other-month {
-    background: #f8f9fa;
-    color: #999;
+    background: #e8e8e8; /* Darker than before for better contrast */
+    color: #777; /* Darker text color */
 }
 
 .day-cell.today {
@@ -216,6 +222,22 @@ body {
     color: #007bff;
 }
 
+/* Weekend styling - Saturday (index 6) and Sunday (index 0) */
+.day-cell:nth-child(7n+1), /* Sunday */
+.day-cell:nth-child(7n) { /* Saturday */
+    background: #f5f5f5; /* Slightly darker background for weekends */
+}
+
+.day-cell:nth-child(7n+1).other-month, /* Sunday other month */
+.day-cell:nth-child(7n).other-month { /* Saturday other month */
+    background: #ddd; /* Darker for weekend other-month combination */
+}
+
+.day-cell:nth-child(7n+1).today, /* Sunday today */
+.day-cell:nth-child(7n).today { /* Saturday today */
+    background: #e3f2fd; /* Keep today styling for weekends */
+}
+
 /* Mobile 3-Day View */
 .mobile-view {
     display: none;
@@ -223,7 +245,7 @@ body {
     overflow-y: auto;
     background: white;
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3); /* Enhanced shadow for contrast */
 }
 
 .mobile-day {
@@ -287,6 +309,16 @@ body {
     font-weight: 300;
 }
 
+.clickable-feast {
+    cursor: pointer;
+    transition: text-decoration 0.2s;
+}
+
+.clickable-feast:hover {
+    text-decoration: underline;
+    color: #007bff;
+}
+
 .liturgical-color {
     width: 10px;
     height: 10px;
@@ -336,7 +368,7 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0,0,0,0.6); /* Darker overlay for better contrast */
 }
 
 .modal-content {
@@ -348,6 +380,7 @@ body {
     max-width: 500px;
     max-height: 70vh;
     overflow-y: auto;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4); /* Enhanced shadow */
 }
 
 .close {
@@ -377,18 +410,20 @@ body {
     }
 
     .calendar-header {
-        padding: 10px 12px;
+        padding: 6px 10px; /* Further reduced padding for mobile */
     }
 
     .current-month {
-        font-size: 18px;
-        position: static;
-        transform: none;
+        font-size: 16px; /* Smaller for mobile */
+        position: absolute; /* Keep absolute positioning on mobile too */
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
     }
 
     .nav-btn {
-        padding: 6px 10px;
-        font-size: 12px;
+        padding: 5px 8px; /* Further reduced padding for mobile */
+        font-size: 11px; /* Smaller font for mobile */
     }
 
     .nav-controls {
