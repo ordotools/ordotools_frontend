@@ -1,5 +1,5 @@
 /**
- * UI Manager for handling all user interface operations
+ * Enhanced UI Manager for handling all user interface operations
  */
 class UIManager {
     constructor() {
@@ -118,8 +118,10 @@ class UIManager {
             dayNumber.textContent = cellDate.getDate();
 
             const feastText = document.createElement('div');
-            feastText.className = 'feast-text';
+            feastText.className = 'feast-text clickable-feast';
             feastText.textContent = ''; // Will be populated by API
+            feastText.style.cursor = 'pointer';
+            feastText.title = 'Click to view details';
 
             const colorIndicator = document.createElement('div');
             colorIndicator.className = 'liturgical-color';
@@ -170,8 +172,10 @@ class UIManager {
             dayHeader.textContent = this.formatMobileDate(cellDate);
 
             const feastText = document.createElement('div');
-            feastText.className = 'feast-text';
+            feastText.className = 'feast-text clickable-feast';
             feastText.textContent = ''; // Will be populated by API
+            feastText.style.cursor = 'pointer';
+            feastText.title = 'Click to view details';
 
             const colorIndicator = document.createElement('div');
             colorIndicator.className = 'liturgical-color';
@@ -220,8 +224,10 @@ class UIManager {
             dayHeader.textContent = this.formatMobileDate(cellDate);
 
             const feastText = document.createElement('div');
-            feastText.className = 'feast-text';
+            feastText.className = 'feast-text clickable-feast';
             feastText.textContent = ''; // Will be populated by API
+            feastText.style.cursor = 'pointer';
+            feastText.title = 'Click to view details';
 
             const colorIndicator = document.createElement('div');
             colorIndicator.className = 'liturgical-color';
@@ -238,7 +244,7 @@ class UIManager {
     }
 
     /**
-     * Render events on calendar
+     * Render events on calendar with enhanced ordo data handling
      */
     renderEvents(eventsMap) {
         // Clear existing events from display (but preserve header sections)
@@ -254,12 +260,33 @@ class UIManager {
             const feastText = container.querySelector('.feast-text');
             const apiEvent = dayEvents.find(event => event.apiEvent);
             
-            if (apiEvent) {
+            if (apiEvent && apiEvent.ordoData) {
+                // Update liturgical color
                 if (colorIndicator) {
                     colorIndicator.style.backgroundColor = apiEvent.color || '#28a745';
                 }
+                
+                // Update feast text and make it clickable
                 if (feastText) {
-                    feastText.textContent = apiEvent.title || '';
+                    const feastName = apiEvent.ordoData.feast_name || 
+                                    apiEvent.ordoData.liturgical_season || 
+                                    'Ordo Day';
+                    feastText.textContent = feastName;
+                    
+                    // Add click handler for detailed view
+                    feastText.onclick = (e) => {
+                        e.stopPropagation();
+                        this.showOrdoDetails(apiEvent.ordoData, dateKey);
+                    };
+                    
+                    // Add visual feedback
+                    feastText.addEventListener('mouseenter', () => {
+                        feastText.style.textDecoration = 'underline';
+                    });
+                    
+                    feastText.addEventListener('mouseleave', () => {
+                        feastText.style.textDecoration = 'none';
+                    });
                 }
             }
             
@@ -279,7 +306,231 @@ class UIManager {
     }
 
     /**
-     * Show event details modal
+     * Show detailed ordo information modal
+     */
+    showOrdoDetails(ordoData, dateKey) {
+        const modal = document.getElementById('eventModal');
+        const content = document.getElementById('modalContent');
+        
+        let html = `<div class="ordo-modal-content">`;
+        
+        // Header with date and main feast
+        html += `<div class="ordo-header">`;
+        html += `<h2>${this.formatDisplayDate(new Date(dateKey))}</h2>`;
+        if (ordoData.feast_name) {
+            html += `<h3 class="feast-name">${ordoData.feast_name}</h3>`;
+        }
+        html += `</div>`;
+        
+        // Basic liturgical information
+        html += `<div class="ordo-section">`;
+        html += `<h4>Liturgical Information</h4>`;
+        
+        if (ordoData.liturgical_season) {
+            html += `<p><strong>Season:</strong> ${ordoData.liturgical_season}</p>`;
+        }
+        
+        if (ordoData.liturgical_color) {
+            html += `<p><strong>Liturgical Color:</strong> <span style="display: inline-block; width: 20px; height: 20px; background-color: ${this.getLiturgicalColorCode(ordoData.liturgical_color)}; border: 1px solid #ccc; margin-left: 5px; vertical-align: middle;"></span> ${ordoData.liturgical_color}</p>`;
+        }
+        
+        if (ordoData.feast_rank) {
+            html += `<p><strong>Rank:</strong> ${ordoData.feast_rank}</p>`;
+        }
+        
+        // Special day indicators
+        const specialDays = [];
+        if (ordoData.is_sunday) specialDays.push('Sunday');
+        if (ordoData.is_holy_day) specialDays.push('Holy Day');
+        if (ordoData.is_fast_day) specialDays.push('Fast Day');
+        if (ordoData.is_ember_day) specialDays.push('Ember Day');
+        
+        if (specialDays.length > 0) {
+            html += `<p><strong>Special Day:</strong> ${specialDays.join(', ')}</p>`;
+        }
+        
+        html += `</div>`;
+        
+        // Commemorations
+        if (ordoData.commemorations && ordoData.commemorations.length > 0) {
+            html += `<div class="ordo-section">`;
+            html += `<h4>Commemorations</h4>`;
+            ordoData.commemorations.forEach(comm => {
+                html += `<div class="commemoration">`;
+                html += `<strong>${comm.name}</strong>`;
+                if (comm.rank) html += ` (${comm.rank})`;
+                if (comm.notes) html += `<br><em>${comm.notes}</em>`;
+                html += `</div>`;
+            });
+            html += `</div>`;
+        }
+        
+        // Mass Proper
+        if (ordoData.mass_proper) {
+            html += `<div class="ordo-section">`;
+            html += `<h4>Mass Proper</h4>`;
+            
+            const massProper = ordoData.mass_proper;
+            
+            if (massProper.collect) {
+                html += `<div class="mass-part"><strong>Collect:</strong> ${massProper.collect}</div>`;
+            }
+            
+            if (massProper.epistle) {
+                html += `<div class="mass-part">`;
+                html += `<strong>Epistle:</strong> `;
+                if (massProper.epistle.reference) {
+                    html += `${massProper.epistle.reference}`;
+                }
+                if (massProper.epistle.text) {
+                    html += `<br><em>${massProper.epistle.text}</em>`;
+                }
+                html += `</div>`;
+            }
+            
+            if (massProper.gradual) {
+                html += `<div class="mass-part"><strong>Gradual:</strong> ${massProper.gradual}</div>`;
+            }
+            
+            if (massProper.gospel) {
+                html += `<div class="mass-part">`;
+                html += `<strong>Gospel:</strong> `;
+                if (massProper.gospel.reference) {
+                    html += `${massProper.gospel.reference}`;
+                }
+                if (massProper.gospel.text) {
+                    html += `<br><em>${massProper.gospel.text}</em>`;
+                }
+                html += `</div>`;
+            }
+            
+            if (massProper.offertory) {
+                html += `<div class="mass-part"><strong>Offertory:</strong> ${massProper.offertory}</div>`;
+            }
+            
+            if (massProper.secret) {
+                html += `<div class="mass-part"><strong>Secret:</strong> ${massProper.secret}</div>`;
+            }
+            
+            if (massProper.communion) {
+                html += `<div class="mass-part"><strong>Communion:</strong> ${massProper.communion}</div>`;
+            }
+            
+            if (massProper.postcommunion) {
+                html += `<div class="mass-part"><strong>Postcommunion:</strong> ${massProper.postcommunion}</div>`;
+            }
+            
+            html += `</div>`;
+        }
+        
+        // Debug information (collapsible)
+        if (ordoData.notes || ordoData.feast_id) {
+            html += `<div class="ordo-section">`;
+            html += `<details>`;
+            html += `<summary style="cursor: pointer; font-weight: bold;">Debug Information</summary>`;
+            if (ordoData.feast_id) {
+                html += `<p><strong>Feast ID:</strong> ${ordoData.feast_id}</p>`;
+            }
+            if (ordoData.notes) {
+                html += `<p><strong>Notes:</strong> ${ordoData.notes}</p>`;
+            }
+            html += `</details>`;
+            html += `</div>`;
+        }
+        
+        html += `</div>`;
+        
+        // Add some basic styling
+        html += `<style>
+            .ordo-modal-content {
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            .ordo-header {
+                border-bottom: 2px solid #dee2e6;
+                margin-bottom: 1rem;
+                padding-bottom: 0.5rem;
+            }
+            .ordo-header h2 {
+                margin: 0 0 0.5rem 0;
+                color: #495057;
+            }
+            .ordo-header h3.feast-name {
+                margin: 0;
+                color: #6f42c1;
+                font-style: italic;
+            }
+            .ordo-section {
+                margin-bottom: 1.5rem;
+                padding: 1rem;
+                background-color: #f8f9fa;
+                border-radius: 0.25rem;
+            }
+            .ordo-section h4 {
+                margin-top: 0;
+                margin-bottom: 0.75rem;
+                color: #495057;
+                border-bottom: 1px solid #dee2e6;
+                padding-bottom: 0.25rem;
+            }
+            .commemoration {
+                margin-bottom: 0.5rem;
+                padding: 0.5rem;
+                background-color: white;
+                border-left: 3px solid #6f42c1;
+                border-radius: 0.25rem;
+            }
+            .mass-part {
+                margin-bottom: 1rem;
+                padding: 0.75rem;
+                background-color: white;
+                border-radius: 0.25rem;
+                border: 1px solid #e9ecef;
+            }
+            .mass-part strong {
+                color: #6f42c1;
+            }
+        </style>`;
+        
+        content.innerHTML = html;
+        modal.style.display = 'block';
+    }
+
+    /**
+     * Get liturgical color hex code
+     */
+    getLiturgicalColorCode(colorName) {
+        const color = (colorName || '').toLowerCase();
+        
+        switch (color) {
+            case 'red': return '#dc3545';
+            case 'white': return '#f8f9fa';
+            case 'green': return '#28a745';
+            case 'purple':
+            case 'violet': return '#6f42c1';
+            case 'rose':
+            case 'pink': return '#e83e8c';
+            case 'gold': return '#ffc107';
+            case 'black': return '#343a40';
+            default: return '#28a745';
+        }
+    }
+
+    /**
+     * Format date for display
+     */
+    formatDisplayDate(date) {
+        const options = { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        };
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    /**
+     * Show event details modal (legacy support)
      */
     showEventDetails(event) {
         const modal = document.getElementById('eventModal');
@@ -289,15 +540,9 @@ class UIManager {
         html += `<p><strong>Date:</strong> ${event.date}</p>`;
         
         if (event.ordoData) {
-            const data = event.ordoData;
-            if (data.liturgical_season) html += `<p><strong>Season:</strong> ${data.liturgical_season}</p>`;
-            if (data.liturgical_color) html += `<p><strong>Color:</strong> ${data.liturgical_color}</p>`;
-            if (data.feast_rank) html += `<p><strong>Rank:</strong> ${data.feast_rank}</p>`;
-            if (data.saint_of_day) html += `<p><strong>Saint:</strong> ${data.saint_of_day}</p>`;
-            if (data.commemorations && data.commemorations.length > 0) {
-                html += `<p><strong>Commemorations:</strong> ${data.commemorations.join(', ')}</p>`;
-            }
-            if (data.notes) html += `<p><strong>Notes:</strong> ${data.notes}</p>`;
+            // Use the new detailed view for ordo data
+            this.showOrdoDetails(event.ordoData, event.date);
+            return;
         }
         
         content.innerHTML = html;
