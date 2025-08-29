@@ -33,7 +33,7 @@ body {
 .header {
     background: var(--background-color);
     border-bottom: 1px solid var(--border-color);
-    padding: 1rem 0;
+    padding: 0.5rem 0;
     position: sticky;
     top: 0;
     z-index: 100;
@@ -46,20 +46,20 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1.25rem;
+    gap: 0.25rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-color);
 }
 
 .logo span:first-child {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
 }
 
 .nav-controls {
@@ -70,9 +70,9 @@ body {
 .month-nav {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
     background: var(--surface-color);
-    padding: 0.5rem;
+    padding: 0.25rem;
     border-radius: var(--radius);
     border: 1px solid var(--border-color);
 }
@@ -81,15 +81,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: 1.75rem;
+    height: 1.75rem;
     border: none;
     background: var(--background-color);
     color: var(--text-light);
     border-radius: 4px;
     cursor: pointer;
     transition: var(--transition);
-    font-size: 1rem;
+    font-size: 0.875rem;
 }
 
 .nav-btn:hover {
@@ -103,13 +103,13 @@ body {
 }
 
 .current-month {
-    font-size: 1.125rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-color);
-    min-width: 8rem;
+    min-width: 7rem;
     text-align: center;
     cursor: pointer;
-    padding: 0.5rem 1rem;
+    padding: 0.25rem 0.75rem;
     border-radius: 4px;
     transition: var(--transition);
 }
@@ -121,14 +121,14 @@ body {
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .action-btn {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
     background: var(--background-color);
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
@@ -136,7 +136,7 @@ body {
     text-decoration: none;
     cursor: pointer;
     transition: var(--transition);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 500;
     font-family: inherit;
 }
@@ -160,7 +160,10 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: 0.5rem 1rem;
+    height: calc(100vh - 60px); /* Subtract header height */
+    display: flex;
+    flex-direction: column;
 }
 
 /* Calendar */
@@ -170,6 +173,9 @@ body {
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow);
     overflow: hidden;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .calendar-header {
@@ -180,10 +186,10 @@ body {
 }
 
 .day-header {
-    padding: 1rem 0.5rem;
+    padding: 0.5rem 0.25rem;
     text-align: center;
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.7rem;
     color: var(--text-light);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -192,20 +198,21 @@ body {
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    grid-auto-rows: minmax(100px, auto);
+    flex: 1;
+    grid-template-rows: repeat(6, 1fr);
 }
 
 .day-cell {
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
-    padding: 0.75rem;
+    padding: 0.5rem;
     cursor: pointer;
     transition: var(--transition);
     position: relative;
     display: flex;
     flex-direction: column;
     background: var(--background-color);
-    min-height: 100px;
+    overflow: hidden;
 }
 
 .day-cell:nth-child(7n) {
@@ -231,31 +238,31 @@ body {
 }
 
 .day-number {
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
 }
 
 .feast-info {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
     overflow: hidden;
 }
 
 .feast-name {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 500;
-    line-height: 1.3;
+    line-height: 1.2;
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
 }
 
 .feast-rank {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: var(--text-muted);
     font-style: italic;
     margin-top: auto;
@@ -304,6 +311,8 @@ body {
 /* Mobile View */
 .mobile-view {
     display: none;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .mobile-day {
@@ -719,9 +728,14 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .header {
+        padding: 0.25rem 0;
+    }
+
     .header-content {
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.5rem;
+        padding: 0 0.5rem;
     }
 
     .nav-controls {
@@ -743,7 +757,8 @@ body {
     }
 
     .container {
-        padding: 1rem;
+        padding: 0.25rem 0.5rem;
+        height: calc(100vh - 80px); /* Adjust for smaller mobile header */
     }
 
     .calendar-wrapper {
@@ -751,7 +766,8 @@ body {
     }
 
     .mobile-view {
-        display: block;
+        display: flex;
+        flex-direction: column;
     }
 
     .modal {
@@ -770,12 +786,13 @@ body {
 
 @media (max-width: 480px) {
     .action-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
     }
 
     .mobile-day {
         padding: 0.75rem;
+        margin-bottom: 0.5rem;
     }
 
     .modal-header,
