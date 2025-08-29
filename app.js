@@ -695,9 +695,12 @@ class ModernLiturgicalCalendar {
         const container = document.getElementById('notifications');
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
+        
+        const icon = type === 'success' ? '✓' : type === 'error' ? '⚠️' : 'ℹ️';
+        
         notification.innerHTML = `
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                <span>${icon}</span>
                 <span>${message}</span>
             </div>
         `;

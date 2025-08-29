@@ -4,10 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Liturgical Calendar</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -19,36 +15,33 @@
     <header class="header">
         <div class="header-content">
             <div class="logo">
-                <i class="fas fa-calendar-alt"></i>
+                <span>📅</span>
                 <span>Liturgical Calendar</span>
             </div>
 
             <div class="nav-controls">
                 <div class="month-nav">
                     <button class="nav-btn" id="prevBtn" aria-label="Previous month">
-                        <i class="fas fa-chevron-left"></i>
+                        ←
                     </button>
                     <div class="current-month" id="currentMonth" tabindex="0" role="button">
                         January 2024
                     </div>
                     <button class="nav-btn" id="nextBtn" aria-label="Next month">
-                        <i class="fas fa-chevron-right"></i>
+                        →
                     </button>
                 </div>
             </div>
 
             <div class="header-actions">
                 <button class="action-btn" id="todayBtn">
-                    <i class="fas fa-home"></i>
                     <span>Today</span>
                 </button>
                 <button class="action-btn" id="settingsBtn">
-                    <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </button>
                 <button class="action-btn primary" id="pdfBtn">
-                    <i class="fas fa-file-pdf"></i>
-                    <span>Export</span>
+                    <span>📄 Export</span>
                 </button>
             </div>
         </div>
@@ -86,13 +79,12 @@
 
         <!-- Error State -->
         <div class="error-container" id="errorContainer" style="display: none;">
-            <i class="fas fa-exclamation-triangle error-icon"></i>
+            <div class="error-icon">⚠️</div>
             <h2 class="error-title">Unable to Load Calendar</h2>
             <p class="error-message" id="errorMessage">
                 We're having trouble connecting to the liturgical calendar service.
             </p>
             <button class="action-btn primary" id="retryBtn">
-                <i class="fas fa-redo"></i>
                 <span>Try Again</span>
             </button>
         </div>
@@ -104,7 +96,7 @@
             <div class="modal-header">
                 <h2 class="modal-title" id="dayModalTitle">Day Details</h2>
                 <button class="modal-close" id="dayModalClose">
-                    <i class="fas fa-times"></i>
+                    ×
                 </button>
             </div>
             <div class="modal-content" id="dayModalContent">
@@ -119,7 +111,7 @@
             <div class="modal-header">
                 <h2 class="modal-title">Settings</h2>
                 <button class="modal-close" id="settingsModalClose">
-                    <i class="fas fa-times"></i>
+                    ×
                 </button>
             </div>
             <div class="modal-content">
@@ -172,7 +164,6 @@
                             <span id="apiStatus" class="status-connected">Connected</span>
                         </div>
                         <button class="action-btn" id="clearCacheBtn">
-                            <i class="fas fa-trash"></i>
                             <span>Clear Cache</span>
                         </button>
                     </div>
@@ -187,18 +178,18 @@
             <div class="modal-header">
                 <h2 class="modal-title">Export to PDF</h2>
                 <button class="modal-close" id="pdfModalClose">
-                    <i class="fas fa-times"></i>
+                    ×
                 </button>
             </div>
             <div class="modal-content">
                 <div class="pdf-options">
                     <div class="pdf-option" data-option="current-month">
-                        <i class="fas fa-calendar"></i>
+                        <div class="pdf-option-icon">📅</div>
                         <div class="pdf-option-title">Current Month</div>
                         <div class="pdf-option-desc">Export the currently displayed month</div>
                     </div>
                     <div class="pdf-option" data-option="current-year">
-                        <i class="fas fa-calendar-alt"></i>
+                        <div class="pdf-option-icon">📆</div>
                         <div class="pdf-option-title">Current Year</div>
                         <div class="pdf-option-desc">Export the entire year calendar</div>
                     </div>
