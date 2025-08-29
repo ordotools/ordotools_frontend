@@ -1,173 +1,186 @@
-# Liturgical Calendar
+# Modern Liturgical Calendar
 
-A fast, accessible, and beautiful liturgical calendar that displays feasts from the ordotools API. Built with vanilla JavaScript and designed for simplicity, performance, and accessibility.
+A beautiful, responsive liturgical calendar application that displays liturgical information from OrdoTools. Completely rebuilt with modern web technologies for an exceptional user experience.
 
-## 🌟 Features
+## ✨ Features
 
-### **Core Functionality**
-- **Liturgical Calendar Display** - Shows feasts, liturgical seasons, and special days
-- **Responsive Design** - Works perfectly on desktop, tablet, and mobile devices
-- **Offline Support** - Caches data locally and works without internet connection
-- **Fast Loading** - Optimized for speed with efficient API calls and caching
+### 🎨 Modern Design
+- Clean, minimalist interface with beautiful typography
+- Responsive design that works perfectly on all devices
+- Smooth animations and hover effects
+- Professional color scheme with liturgical color indicators
+- Dark mode support (automatic based on system preference)
 
-### **Accessibility**
-- **Screen Reader Support** - Full ARIA labels and semantic markup
-- **Keyboard Navigation** - Complete keyboard accessibility with arrow keys
-- **Focus Management** - Proper focus handling for all interactive elements
-- **High Contrast** - Clean black and white design for excellent readability
+### 📅 Robust Calendar
+- **Desktop View**: Full calendar grid with detailed day information
+- **Mobile View**: Optimized list view for smaller screens
+- **Navigation**: Easy month/year navigation with keyboard shortcuts
+- **Today Button**: Quick navigation back to current date
+- **Day Details**: Click any day to see detailed liturgical information
 
-### **User Experience**
-- **Minimal Design** - Clean, distraction-free interface
-- **Touch-Friendly** - Optimized for mobile touch interactions
-- **Settings Panel** - Customizable display options
-- **Detail Views** - Rich information for each liturgical day
+### 🔧 Advanced Features
+- **Settings Panel**: Customize display options
+  - Toggle feast ranks display
+  - Show/hide liturgical colors
+  - Control commemorations display
+- **Smart Caching**: Intelligent data caching for fast performance
+- **PDF Export**: Generate beautiful PDFs of calendar data
+  - Current month or entire year
+  - Compact or standard layouts
+  - Landscape or portrait orientation
+  - Include liturgical colors
+- **Keyboard Navigation**: Full keyboard accessibility
+- **Screen Reader Support**: Complete accessibility features
 
-## 🚀 Quick Start
+### 🌐 Data Integration
+- **OrdoTools API**: Seamless integration with liturgical data
+- **Offline Support**: Cached data available when offline
+- **Fast Loading**: Optimized data fetching and caching
+- **Error Handling**: Graceful error handling with retry options
 
-### **Deployment**
-Simply deploy the `index.html` file to any web server. The application is completely self-contained with no external dependencies.
+## 🚀 Usage
 
-### **Local Development**
-1. Clone the repository
-2. Open `index.html` in a web browser
-3. The calendar will automatically load and display the current month
+### Basic Navigation
+- Use arrow buttons or arrow keys to navigate months
+- Click "Today" or press `T` to return to current date
+- Click any day to view detailed information
 
-### **API Requirements**
-The calendar connects to the ordotools API at `https://api-eky0.onrender.com` for liturgical data.
+### Keyboard Shortcuts
+- `←` / `→` : Navigate months
+- `Home` / `T` : Go to today
+- `Ctrl+S` : Open settings
+- `Ctrl+P` : Open PDF export
+- `Escape` : Close modals
 
-## 📱 Usage
-
-### **Navigation**
-- **Previous/Next Month** - Use the navigation buttons or arrow keys
-- **Go to Today** - Click "Today" button or press `Home` key
-- **Keyboard Shortcuts**:
-  - `←/→` - Navigate between months
-  - `Home` - Go to today
-  - `Escape` - Close panels
-  - `Enter/Space` - Open day details
-
-### **Settings**
-Click the ⚙️ button to access settings:
-- **Show Feast Ranks** - Display liturgical feast ranks
-- **Show Liturgical Colors** - Display colored borders for liturgical colors
-- **Show Commemorations** - Display commemorations in detail views
-- **Cache Management** - Clear cached data or test API connection
-
-### **Day Details**
-Click on any day to view detailed liturgical information including:
-- Feast name and rank
-- Liturgical season
-- Special day indicators (Sundays, Holy Days, etc.)
-- Commemorations
-- Mass proper readings
-
-## 🏗️ Architecture
-
-### **Single File Design**
-The entire application is contained in one HTML file for maximum simplicity:
-- **HTML Structure** - Semantic markup with accessibility features
-- **CSS Styling** - Clean, responsive design with CSS Grid
-- **JavaScript Logic** - Vanilla JS with modern ES6+ features
-
-### **Performance Optimizations**
-- **DocumentFragment** - Batch DOM operations for smooth rendering
-- **RequestAnimationFrame** - Optimized visual updates
-- **Intelligent Caching** - Local storage with smart invalidation
-- **Concurrent API Calls** - Efficient data loading with rate limiting
-
-### **Data Flow**
-1. **API Integration** - Yearly data loading from ordotools API
-2. **Caching Layer** - Local storage with 7-day expiration
-3. **State Management** - Simple, predictable state handling
-4. **UI Updates** - Optimized rendering with minimal DOM manipulation
-
-## 🎨 Design Principles
-
-### **Visual Design**
-- **Color Scheme** - Pure black (#000000) and white (#ffffff) with grays
-- **Typography** - Clean system fonts for optimal readability
-- **Layout** - Minimal grid-based design with generous whitespace
-- **Borders** - Simple black lines for structure
-
-### **User Experience**
-- **Speed** - Fast loading and instant interactions
-- **Simplicity** - Intuitive navigation with minimal cognitive load
-- **Readability** - Clear hierarchy and excellent contrast
-- **Responsive** - Perfect experience on all screen sizes
+### Mobile Experience
+- Optimized list view for mobile devices
+- Touch-friendly interface
+- Swipe gestures supported
+- Automatic responsive layout switching
 
 ## 🔧 Technical Details
 
-### **Browser Support**
-- Modern browsers with ES6+ support
-- Chrome, Firefox, Safari, Edge
-- Mobile browsers (iOS Safari, Chrome Mobile)
+### Architecture
+- **Modern JavaScript**: ES6+ with class-based architecture
+- **CSS Grid & Flexbox**: Modern layout techniques
+- **Web APIs**: Fetch, LocalStorage, Intersection Observer
+- **Progressive Enhancement**: Works without JavaScript (basic functionality)
 
-### **Performance Targets**
-- **Load Time** - Under 2 seconds on 3G connection
-- **Interaction** - Instant response to user actions
-- **Memory** - Efficient memory usage with proper cleanup
-- **Offline** - Full functionality with cached data
+### Performance
+- **Smart Caching**: 7-day cache with automatic cleanup
+- **Lazy Loading**: Load data only when needed
+- **Request Deduplication**: Prevent duplicate API calls
+- **Optimized Rendering**: Batch DOM updates for smooth performance
 
-### **Accessibility Standards**
-- **WCAG 2.1 AA** - Full compliance with accessibility guidelines
-- **Screen Readers** - Compatible with NVDA, JAWS, VoiceOver
-- **Keyboard Navigation** - Complete keyboard accessibility
-- **Focus Management** - Proper focus handling and visible focus indicators
+### Accessibility
+- **WCAG 2.1 AA Compliant**: Full accessibility support
+- **Keyboard Navigation**: Complete keyboard accessibility
+- **Screen Reader Support**: Proper ARIA labels and roles
+- **High Contrast Support**: Automatic high contrast mode
+- **Reduced Motion**: Respects user motion preferences
 
-## 📊 API Integration
+### Browser Support
+- **Modern Browsers**: Chrome 80+, Firefox 75+, Safari 13+, Edge 80+
+- **Mobile Browsers**: iOS Safari 13+, Chrome Mobile 80+
+- **Progressive Enhancement**: Graceful degradation for older browsers
 
-### **Data Structure**
-The calendar integrates with the ordotools API to display:
-- **Feast Names** - Primary liturgical celebrations
-- **Liturgical Seasons** - Current liturgical time
-- **Feast Ranks** - Importance level of celebrations
-- **Liturgical Colors** - Traditional color indicators
-- **Commemorations** - Secondary celebrations
-- **Mass Proper** - Readings and prayers for the day
+## 📱 Device Support
 
-### **Caching Strategy**
-- **Yearly Data** - Caches complete year data for fast access
-- **Smart Invalidation** - 7-day cache expiration
-- **Offline Support** - Works with cached data when offline
-- **Background Updates** - Updates data without blocking UI
+### Desktop
+- **Optimal Experience**: Full calendar grid view
+- **Large Screens**: Supports up to 1400px container width
+- **Keyboard Navigation**: Full keyboard support
+- **Mouse Interactions**: Hover effects and click handlers
 
-## 🚀 Deployment
+### Tablet
+- **Responsive Layout**: Adapts to tablet screen sizes
+- **Touch Support**: Touch-optimized interactions
+- **Landscape/Portrait**: Works in both orientations
 
-### **Simple Deployment**
-1. Upload `index.html` to any web server
-2. No build process or dependencies required
-3. Works with any static hosting service
+### Mobile
+- **Optimized View**: Special mobile list layout
+- **Touch-First**: Designed for touch interactions
+- **Performance**: Optimized for mobile performance
+- **PWA Ready**: Can be installed as Progressive Web App
 
-### **Recommended Hosting**
-- **GitHub Pages** - Free static hosting
-- **Netlify** - Fast global CDN
-- **Vercel** - Optimized for performance
-- **Traditional Web Server** - Apache, Nginx, etc.
+## 🎨 Customization
 
-## 🤝 Contributing
+### Liturgical Colors
+The calendar displays liturgical colors as indicators:
+- **White**: Major feasts, Christmas, Easter
+- **Red**: Martyrs, Palm Sunday, Pentecost
+- **Green**: Ordinary Time
+- **Purple/Violet**: Advent, Lent
+- **Rose/Pink**: Gaudete and Laetare Sundays
+- **Gold**: Special solemnities
+- **Black**: Good Friday, All Souls
 
-### **Development Guidelines**
-- Maintain the single-file architecture
-- Follow accessibility best practices
-- Test on multiple devices and browsers
-- Keep performance optimizations in mind
+### Display Options
+Customize the calendar display through settings:
+- **Feast Ranks**: Show liturgical rank information
+- **Liturgical Colors**: Display color indicators
+- **Commemorations**: Show additional saints and commemorations
 
-### **Code Style**
-- Clean, readable JavaScript
-- Semantic HTML structure
-- Minimal, purposeful CSS
-- Comprehensive comments
+## 📄 PDF Export
+
+Generate professional PDF calendars with:
+- **Month View**: Single month with detailed information
+- **Year View**: Complete year overview
+- **Layout Options**: Compact or standard layouts
+- **Orientation**: Portrait or landscape
+- **Colors**: Include or exclude liturgical color indicators
+
+## 🔗 API Integration
+
+### OrdoTools API
+- **Endpoint**: `https://api-eky0.onrender.com`
+- **Data Format**: Structured liturgical data with feast information
+- **Caching**: Intelligent caching reduces API calls
+- **Error Handling**: Graceful handling of API failures
+
+### Data Structure
+Each day includes:
+- Feast name and liturgical season
+- Feast rank and liturgical color
+- Special day indicators (Holy Days, Fast Days, etc.)
+- Mass readings and propers
+- Commemorations and additional saints
+
+## 🛠️ Development
+
+### File Structure
+```
+├── index.html          # Main HTML structure
+├── styles.css          # Modern CSS styling
+├── app.js             # Main application logic
+├── print-formatter.js  # PDF generation functionality
+└── README.md          # This documentation
+```
+
+### Maintenance
+- **Cache Management**: Automatic cleanup of expired cache
+- **Error Logging**: Console logging for debugging
+- **Performance Monitoring**: Built-in performance tracking
+- **Settings Persistence**: User preferences saved locally
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project integrates with OrdoTools for liturgical data. The calendar interface is designed for educational and liturgical use.
 
-## 🙏 Acknowledgments
+## 🤝 Contributing
 
-- **ordotools API** - Providing liturgical data
-- **Accessibility Community** - Guidance on inclusive design
-- **Open Source Community** - Inspiration and best practices
+This is a modern rebuild of the liturgical calendar. Contributions are welcome for:
+- UI/UX improvements
+- Additional liturgical features
+- Performance optimizations
+- Accessibility enhancements
 
----
+## 📧 Support
 
-**Built with ❤️ for the liturgical community**
+For issues with the calendar interface, please check:
+1. Browser compatibility
+2. JavaScript enabled
+3. Network connection for data loading
+4. Cache management in settings
+
+Built with ❤️ for the liturgical community.
