@@ -6,35 +6,35 @@ Create a minimal, fast, and clean liturgical calendar that displays feasts from 
 ## Current Problems Identified
 
 ### Architecture Issues
-- [ ] Overly complex 5-file architecture (calendar.js, api-client.js, ui-manager.js, config.js, keyboard-navigation.js)
-- [ ] Complex interdependencies between modules
-- [ ] Mixed concerns (UI logic mixed with API logic)
-- [ ] Excessive console logging and debugging code
+- [x] Overly complex 5-file architecture (calendar.js, api-client.js, ui-manager.js, config.js, keyboard-navigation.js)
+- [x] Complex interdependencies between modules
+- [x] Mixed concerns (UI logic mixed with API logic)
+- [x] Excessive console logging and debugging code
 
 ### Performance Issues
-- [ ] Inefficient month-by-month API calls
-- [ ] Excessive DOM manipulation and re-rendering
-- [ ] No proper caching strategy
-- [ ] Complex event handling with potential memory leaks
+- [x] Inefficient month-by-month API calls
+- [x] Excessive DOM manipulation and re-rendering
+- [x] No proper caching strategy
+- [x] Complex event handling with potential memory leaks
 
 ### UI/UX Issues
-- [ ] Dark gray background (#3a3a3a) doesn't match black/white minimal requirement
-- [ ] Too many visual elements and colors
-- [ ] Complex modal system with excessive styling
-- [ ] Mobile view has confusing infinite scroll
-- [ ] Status indicators and environment badges clutter the interface
+- [x] Dark gray background (#3a3a3a) doesn't match black/white minimal requirement
+- [x] Too many visual elements and colors
+- [x] Complex modal system with excessive styling
+- [x] Mobile view has confusing infinite scroll
+- [x] Status indicators and environment badges clutter the interface
 
 ### API Integration Problems
-- [ ] Month-by-month API calls are inefficient
-- [ ] No proper error recovery
-- [ ] Complex data transformation logic
-- [ ] No offline support
+- [x] Month-by-month API calls are inefficient
+- [x] No proper error recovery
+- [x] Complex data transformation logic
+- [x] No offline support
 
 ### Accessibility Issues
-- [ ] No proper ARIA labels
+- [x] No proper ARIA labels
 - [ ] Complex keyboard navigation
 - [ ] No focus management
-- [ ] Poor screen reader support
+- [x] Poor screen reader support
 
 ## Rebuild Plan
 
@@ -74,6 +74,16 @@ Create a minimal, fast, and clean liturgical calendar that displays feasts from 
 - [x] **Accessibility testing** - Screen reader compatibility
 - [x] **Cross-browser testing** - Ensure compatibility
 - [x] **Remove all debugging code** - Clean production-ready code
+
+### Phase 6: Advanced Accessibility & Polish 🚧
+- [x] **Improve ARIA labels and roles** - Better screen reader support
+- [x] **Add proper form semantics** - Fieldset/legend for settings
+- [x] **Enhance modal accessibility** - Proper dialog roles and labels
+- [x] **Improve status announcements** - Better aria-live regions
+- [ ] **Simplify keyboard navigation** - Reduce complexity of shortcuts
+- [ ] **Add focus management** - Ensure logical tab order and focus indicators
+- [x] **Remove emoji from logo** - Cleaner minimal aesthetic
+- [ ] **Simplify color scheme** - Ensure true black/white minimalism
 
 ## Design Principles
 

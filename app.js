@@ -35,7 +35,6 @@ class ModernLiturgicalCalendar {
 
         // Modal controls
         document.getElementById('settingsBtn').addEventListener('click', () => this.openModal('settingsModal'));
-        document.getElementById('pdfBtn').addEventListener('click', () => this.openModal('pdfModal'));
         
         // Modal close buttons
         document.querySelectorAll('.modal-close').forEach(btn => {
@@ -68,10 +67,7 @@ class ModernLiturgicalCalendar {
         // Cache management
         document.getElementById('clearCacheBtn').addEventListener('click', () => this.clearCache());
 
-        // PDF export
-        document.querySelectorAll('.pdf-option').forEach(option => {
-            option.addEventListener('click', () => this.exportPDF(option.dataset.option));
-        });
+
 
         // Retry button
         document.getElementById('retryBtn').addEventListener('click', () => this.loadData());
@@ -878,42 +874,7 @@ class ModernLiturgicalCalendar {
         };
     }
 
-    // PDF Export
-    async exportPDF(type) {
-        try {
-            const options = {
-                compact: document.getElementById('pdfCompact').checked,
-                landscape: document.getElementById('pdfLandscape').checked,
-                includeColors: document.getElementById('pdfColors').checked
-            };
 
-            this.showNotification('Generating PDF...', 'info');
-
-            if (typeof PrintFormatter !== 'undefined') {
-                const printFormatter = new PrintFormatter();
-                
-                if (type === 'current-month') {
-                    const year = this.currentDate.getFullYear();
-                    const month = this.currentDate.getMonth();
-                    const yearData = this.cache.get(year) || {};
-                    await printFormatter.generateMonthPDF(year, month, yearData, options);
-                } else if (type === 'current-year') {
-                    const year = this.currentDate.getFullYear();
-                    const yearData = this.cache.get(year) || {};
-                    await printFormatter.generateYearPDF(year, yearData, options);
-                }
-
-                this.showNotification('PDF generated successfully', 'success');
-            } else {
-                throw new Error('PDF generator not available');
-            }
-
-            this.closeModal('pdfModal');
-        } catch (error) {
-            console.error('PDF generation failed:', error);
-            this.showNotification('Failed to generate PDF', 'error');
-        }
-    }
 
     // Utility Methods
     getYearsNeeded(currentYear, currentMonth) {

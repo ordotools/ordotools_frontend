@@ -1,4 +1,6 @@
 // Modern PDF Print Formatter for Liturgical Calendar
+// TODO: Re-enable export functionality (generateMonthPDF and generateYearPDF methods) when needed
+
 class PrintFormatter {
     constructor() {
         this.pageWidth = 210; // A4 width in mm
@@ -21,6 +23,8 @@ class PrintFormatter {
         };
     }
 
+    // TODO: Re-enable export functionality when needed
+    /*
     async generateMonthPDF(year, month, dayData, options = {}) {
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF({
@@ -87,6 +91,7 @@ class PrintFormatter {
         const filename = `liturgical-calendar-${year}.pdf`;
         pdf.save(filename);
     }
+    */
 
     generateTitlePage(pdf, year, options) {
         const centerX = this.pageWidth / 2;

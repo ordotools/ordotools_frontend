@@ -56,14 +56,11 @@ body {
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.875rem;
+    font-weight: 700;
     color: var(--text-color);
-}
-
-.logo span:first-child {
-    font-size: 1.25rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
 .nav-controls {
