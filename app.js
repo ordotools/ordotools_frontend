@@ -11,8 +11,12 @@ class ModernLiturgicalCalendar {
         // API Configuration
         this.apiBaseUrl = 'https://api-eky0.onrender.com';
         
-        // Settings
-        this.settings = this.loadSettings();
+        // Settings - hardcoded to show everything
+        this.settings = {
+            showFeastRanks: true,
+            showLiturgicalColors: true,
+            showCommemorations: true
+        };
         
         // Initialize
         this.init();
@@ -23,7 +27,6 @@ class ModernLiturgicalCalendar {
         this.loadCacheFromStorage();
         this.render();
         this.loadData();
-        this.initializeSettings();
     }
 
     bindEvents() {
@@ -32,42 +35,6 @@ class ModernLiturgicalCalendar {
         document.getElementById('nextBtn').addEventListener('click', () => this.changeMonth(1));
         document.getElementById('todayBtn').addEventListener('click', () => this.goToToday());
         document.getElementById('currentMonth').addEventListener('click', () => this.goToToday());
-
-        // Modal controls
-        document.getElementById('settingsBtn').addEventListener('click', () => this.openModal('settingsModal'));
-        
-        // Modal close buttons
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal-overlay');
-                this.closeModal(modal.id);
-            });
-        });
-
-        // Modal overlays
-        document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) {
-                    this.closeModal(overlay.id);
-                }
-            });
-        });
-
-        // Settings
-        document.getElementById('showFeastRanks').addEventListener('change', (e) => {
-            this.updateSetting('showFeastRanks', e.target.checked);
-        });
-        document.getElementById('showLiturgicalColors').addEventListener('change', (e) => {
-            this.updateSetting('showLiturgicalColors', e.target.checked);
-        });
-        document.getElementById('showCommemorations').addEventListener('change', (e) => {
-            this.updateSetting('showCommemorations', e.target.checked);
-        });
-
-        // Cache management
-        document.getElementById('clearCacheBtn').addEventListener('click', () => this.clearCache());
-
-
 
         // Retry button
         document.getElementById('retryBtn').addEventListener('click', () => this.loadData());
@@ -97,24 +64,6 @@ class ModernLiturgicalCalendar {
                 e.preventDefault();
                 this.goToToday();
                 break;
-            case 'Escape':
-                e.preventDefault();
-                this.closeAllModals();
-                break;
-            case 's':
-            case 'S':
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    this.openModal('settingsModal');
-                }
-                break;
-            case 'p':
-            case 'P':
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    this.openModal('pdfModal');
-                }
-                break;
         }
     }
 
@@ -122,6 +71,7 @@ class ModernLiturgicalCalendar {
         clearTimeout(this.resizeTimeout);
         this.resizeTimeout = setTimeout(() => {
             this.render();
+            this.refreshDisplay();
         }, 250);
     }
 
@@ -135,7 +85,6 @@ class ModernLiturgicalCalendar {
         this.currentDate = new Date();
         this.render();
         this.loadData();
-        this.showNotification('Jumped to today', 'info');
     }
 
     render() {
@@ -145,15 +94,9 @@ class ModernLiturgicalCalendar {
     }
 
     updateHeader() {
-        const monthNames = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        
-        const month = monthNames[this.currentDate.getMonth()];
-        const year = this.currentDate.getFullYear();
-        
-        document.getElementById('currentMonth').textContent = `${month} ${year}`;
+        // Use native Intl API for month formatting (no dependency needed)
+        const formatter = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' });
+        document.getElementById('currentMonth').textContent = formatter.format(this.currentDate);
     }
 
     renderDesktopCalendar() {
@@ -191,8 +134,6 @@ class ModernLiturgicalCalendar {
         const cell = document.createElement('div');
         cell.className = 'day-cell';
         cell.dataset.date = this.formatDateKey(date);
-        cell.setAttribute('tabindex', '0');
-        cell.setAttribute('role', 'button');
 
         if (date.getMonth() !== this.currentDate.getMonth()) {
             cell.classList.add('other-month');
@@ -229,13 +170,6 @@ class ModernLiturgicalCalendar {
         cell.appendChild(feastInfo);
         cell.appendChild(specialIndicators);
 
-        cell.addEventListener('click', () => this.openDayDetail(date));
-        cell.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.openDayDetail(date);
-            }
-        });
 
         return cell;
     }
@@ -244,8 +178,6 @@ class ModernLiturgicalCalendar {
         const day = document.createElement('div');
         day.className = 'mobile-day';
         day.dataset.date = this.formatDateKey(date);
-        day.setAttribute('tabindex', '0');
-        day.setAttribute('role', 'button');
 
         if (date.getTime() === this.today.getTime()) {
             day.classList.add('today');
@@ -260,8 +192,9 @@ class ModernLiturgicalCalendar {
 
         const dayName = document.createElement('div');
         dayName.className = 'mobile-day-name';
-        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        dayName.textContent = dayNames[date.getDay()];
+        // Use native Intl for day names (no dependency)
+        const dayFormatter = new Intl.DateTimeFormat('en-US', { weekday: 'long' });
+        dayName.textContent = dayFormatter.format(date);
 
         const feast = document.createElement('div');
         feast.className = 'mobile-feast';
@@ -280,13 +213,6 @@ class ModernLiturgicalCalendar {
         day.appendChild(feast);
         day.appendChild(rank);
 
-        day.addEventListener('click', () => this.openDayDetail(date));
-        day.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.openDayDetail(date);
-            }
-        });
 
         return day;
     }
@@ -501,163 +427,6 @@ class ModernLiturgicalCalendar {
         return colorMap[color.toLowerCase().trim()] || null;
     }
 
-    openDayDetail(date) {
-        const dateKey = this.formatDateKey(date);
-        const currentYear = this.currentDate.getFullYear();
-        const yearData = this.cache.get(currentYear) || {};
-        const dayData = yearData[dateKey];
-
-        this.populateDayDetail(date, dayData);
-        this.openModal('dayModal');
-    }
-
-    populateDayDetail(date, dayData) {
-        const title = document.getElementById('dayModalTitle');
-        const content = document.getElementById('dayModalContent');
-
-        const formattedDate = date.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-
-        title.textContent = formattedDate;
-
-        if (!dayData) {
-            content.innerHTML = `
-                <div class="detail-section">
-                    <h3>No Data Available</h3>
-                    <p>No liturgical data is available for this date.</p>
-                </div>
-            `;
-            return;
-        }
-
-        let html = '';
-
-        // Main liturgical information
-        html += '<div class="detail-section">';
-        html += '<h3>Liturgical Information</h3>';
-
-        if (dayData.feast_name) {
-            html += `<div class="detail-item">
-                <span class="detail-label">Feast:</span>
-                <span class="detail-value">${dayData.feast_name}</span>
-            </div>`;
-        }
-
-        if (dayData.liturgical_season) {
-            html += `<div class="detail-item">
-                <span class="detail-label">Season:</span>
-                <span class="detail-value">${dayData.liturgical_season}</span>
-            </div>`;
-        }
-
-        if (this.settings.showFeastRanks && dayData.feast_rank) {
-            html += `<div class="detail-item">
-                <span class="detail-label">Rank:</span>
-                <span class="detail-value">${dayData.feast_rank}</span>
-            </div>`;
-        }
-
-        if (this.settings.showLiturgicalColors && dayData.liturgical_color) {
-            html += `<div class="detail-item">
-                <span class="detail-label">Color:</span>
-                <span class="detail-value">${dayData.liturgical_color}</span>
-            </div>`;
-        }
-
-        html += '</div>';
-
-        // Special days
-        const specialDays = [];
-        if (dayData.is_sunday) specialDays.push('Sunday');
-        if (dayData.is_holy_day) specialDays.push('Holy Day');
-        if (dayData.is_fast_day) specialDays.push('Fast Day');
-        if (dayData.is_ember_day) specialDays.push('Ember Day');
-
-        if (specialDays.length > 0) {
-            html += '<div class="detail-section">';
-            html += '<h3>Special Observances</h3>';
-            html += `<div class="detail-item">
-                <span class="detail-label">Type:</span>
-                <span class="detail-value">${specialDays.join(', ')}</span>
-            </div>`;
-            html += '</div>';
-        }
-
-        // Commemorations
-        if (this.settings.showCommemorations && dayData.commemorations && dayData.commemorations.length > 0) {
-            html += '<div class="detail-section">';
-            html += '<h3>Commemorations</h3>';
-            dayData.commemorations.forEach(comm => {
-                html += `<div class="detail-item">
-                    <span class="detail-label">${comm.rank || 'Commemoration'}:</span>
-                    <span class="detail-value">${comm.name}</span>
-                </div>`;
-            });
-            html += '</div>';
-        }
-
-        // Mass readings
-        if (dayData.mass_proper) {
-            html += '<div class="detail-section">';
-            html += '<h3>Mass Readings</h3>';
-
-            const massProper = dayData.mass_proper;
-
-            if (massProper.epistle && massProper.epistle.reference) {
-                html += `<div class="detail-item">
-                    <span class="detail-label">Epistle:</span>
-                    <span class="detail-value">${massProper.epistle.reference}</span>
-                </div>`;
-            }
-
-            if (massProper.gospel && massProper.gospel.reference) {
-                html += `<div class="detail-item">
-                    <span class="detail-label">Gospel:</span>
-                    <span class="detail-value">${massProper.gospel.reference}</span>
-                </div>`;
-            }
-
-            html += '</div>';
-        }
-
-        content.innerHTML = html;
-    }
-
-    openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('open');
-            document.body.style.overflow = 'hidden';
-            
-            const closeButton = modal.querySelector('.modal-close');
-            if (closeButton) {
-                setTimeout(() => closeButton.focus(), 100);
-            }
-        }
-
-        if (modalId === 'settingsModal') {
-            this.updateSettingsDisplay();
-        }
-    }
-
-    closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('open');
-            document.body.style.overflow = '';
-        }
-    }
-
-    closeAllModals() {
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.classList.remove('open');
-        });
-        document.body.style.overflow = '';
-    }
 
     showLoading() {
         document.getElementById('calendarWrapper').style.display = 'none';
@@ -672,9 +441,9 @@ class ModernLiturgicalCalendar {
         
         if (window.innerWidth <= 768) {
             document.getElementById('calendarWrapper').style.display = 'none';
-            document.getElementById('mobileView').style.display = 'block';
+            document.getElementById('mobileView').style.display = 'flex';
         } else {
-            document.getElementById('calendarWrapper').style.display = 'block';
+            document.getElementById('calendarWrapper').style.display = 'flex';
             document.getElementById('mobileView').style.display = 'none';
         }
     }
@@ -687,83 +456,6 @@ class ModernLiturgicalCalendar {
         document.getElementById('errorMessage').textContent = message;
     }
 
-    showNotification(message, type = 'info') {
-        const container = document.getElementById('notifications');
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        
-        const icon = type === 'success' ? '✓' : type === 'error' ? '⚠️' : 'ℹ️';
-        
-        notification.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span>${icon}</span>
-                <span>${message}</span>
-            </div>
-        `;
-
-        container.appendChild(notification);
-        
-        setTimeout(() => notification.classList.add('show'), 100);
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
-    }
-
-    // Settings Management
-    loadSettings() {
-        try {
-            const saved = localStorage.getItem('liturgical_settings');
-            if (saved) {
-                return { ...this.getDefaultSettings(), ...JSON.parse(saved) };
-            }
-        } catch (error) {
-            console.warn('Failed to load settings:', error);
-        }
-        return this.getDefaultSettings();
-    }
-
-    getDefaultSettings() {
-        return {
-            showFeastRanks: true,
-            showLiturgicalColors: true,
-            showCommemorations: true
-        };
-    }
-
-    saveSettings() {
-        try {
-            localStorage.setItem('liturgical_settings', JSON.stringify(this.settings));
-        } catch (error) {
-            console.warn('Failed to save settings:', error);
-        }
-    }
-
-    updateSetting(key, value) {
-        this.settings[key] = value;
-        this.saveSettings();
-        this.refreshDisplay();
-        this.showNotification('Settings updated', 'success');
-    }
-
-    initializeSettings() {
-        document.getElementById('showFeastRanks').checked = this.settings.showFeastRanks;
-        document.getElementById('showLiturgicalColors').checked = this.settings.showLiturgicalColors;
-        document.getElementById('showCommemorations').checked = this.settings.showCommemorations;
-    }
-
-    updateSettingsDisplay() {
-        const cacheInfo = this.getCacheInfo();
-        document.getElementById('cachedYearsInfo').textContent = 
-            cacheInfo.years.length > 0 ? cacheInfo.years.join(', ') : 'None';
-        
-        document.getElementById('apiStatus').textContent = 'Connected';
-    }
 
     refreshDisplay() {
         const currentYear = this.currentDate.getFullYear();
@@ -848,31 +540,6 @@ class ModernLiturgicalCalendar {
         return null;
     }
 
-    clearCache() {
-        this.cache.clear();
-        this.pendingRequests.clear();
-
-        try {
-            const cachedYears = JSON.parse(localStorage.getItem('liturgical_cache_years') || '[]');
-            cachedYears.forEach(year => {
-                localStorage.removeItem(`liturgical_cache_${year}`);
-            });
-            localStorage.removeItem('liturgical_cache_years');
-        } catch (error) {
-            console.warn('Failed to clear cache:', error);
-        }
-
-        this.updateSettingsDisplay();
-        this.showNotification('Cache cleared successfully', 'success');
-    }
-
-    getCacheInfo() {
-        const years = Array.from(this.cache.keys()).sort();
-        return {
-            years: years,
-            count: years.length
-        };
-    }
 
 
 
@@ -893,7 +560,11 @@ class ModernLiturgicalCalendar {
     }
 
     formatDateKey(date) {
-        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        // Use native Intl for date formatting (no dependency)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 }
 

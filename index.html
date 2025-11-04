@@ -6,10 +6,10 @@
     <title>Modern Liturgical Calendar</title>
 
     <link rel="stylesheet" href="styles.css">
+    <!-- Narrow font options: Roboto Condensed, Open Sans Condensed, or PT Sans Narrow -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Open+Sans+Condensed:wght@300;700&family=PT+Sans+Narrow:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="sr-only">Skip to main content</a>
 
     <!-- Header -->
     <header class="header">
@@ -21,23 +21,20 @@
             <div class="nav-controls" role="navigation" aria-label="Month navigation">
                 <div class="month-nav">
                     <button class="nav-btn" id="prevBtn" aria-label="Go to previous month">
-                        ←
+                        ◀
                     </button>
                     <div class="current-month" id="currentMonth" tabindex="0" role="button" aria-label="Current month and year, click to go to today">
                         January 2024
                     </div>
                     <button class="nav-btn" id="nextBtn" aria-label="Go to next month">
-                        →
+                        ▶
                     </button>
                 </div>
             </div>
 
             <div class="header-actions" role="toolbar" aria-label="Calendar actions">
-                <button class="action-btn" id="todayBtn" aria-label="Go to today's date">
+                <button class="action-btn" id="todayBtn">
                     <span>Today</span>
-                </button>
-                <button class="action-btn" id="settingsBtn" aria-label="Open calendar settings">
-                    <span>Settings</span>
                 </button>
             </div>
         </div>
@@ -86,96 +83,6 @@
         </div>
     </main>
 
-    <!-- Day Detail Modal -->
-    <div class="modal-overlay" id="dayModal" role="dialog" aria-modal="true" aria-labelledby="dayModalTitle" aria-describedby="dayModalContent">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title" id="dayModalTitle">Day Details</h2>
-                <button class="modal-close" id="dayModalClose" aria-label="Close day details">
-                    ×
-                </button>
-            </div>
-            <div class="modal-content" id="dayModalContent">
-                <!-- Day details populated by JavaScript -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title" id="settingsModalTitle">Settings</h2>
-                <button class="modal-close" id="settingsModalClose" aria-label="Close settings">
-                    ×
-                </button>
-            </div>
-            <div class="modal-content">
-                <div class="settings-group">
-                    <fieldset>
-                        <legend class="settings-label">Display Options</legend>
-                        
-                        <div class="checkbox-wrapper">
-                            <div class="checkbox">
-                                <input type="checkbox" id="showFeastRanks" checked aria-describedby="feastRanksDesc">
-                                <div class="checkmark" aria-hidden="true"></div>
-                            </div>
-                            <div>
-                                <label for="showFeastRanks">Show feast ranks</label>
-                                <div class="setting-desc" id="feastRanksDesc">Display liturgical rank information</div>
-                            </div>
-                        </div>
-
-                        <div class="checkbox-wrapper">
-                            <div class="checkbox">
-                                <input type="checkbox" id="showLiturgicalColors" checked aria-describedby="liturgicalColorsDesc">
-                                <div class="checkmark" aria-hidden="true"></div>
-                            </div>
-                            <div>
-                                <label for="showLiturgicalColors">Show liturgical colors</label>
-                                <div class="setting-desc" id="liturgicalColorsDesc">Display color indicators on calendar days</div>
-                            </div>
-                        </div>
-
-                        <div class="checkbox-wrapper">
-                            <div class="checkbox">
-                                <input type="checkbox" id="showCommemorations" checked aria-describedby="commemorationsDesc">
-                                <div class="checkmark" aria-hidden="true"></div>
-                            </div>
-                            <div>
-                                <label for="showCommemorations">Show commemorations</label>
-                                <div class="setting-desc" id="commemorationsDesc">Display additional commemorations and saints</div>
-                            </div>
-                        </div>
-                    </fieldset>
-                </div>
-
-                <div class="settings-group">
-                    <fieldset>
-                        <legend class="settings-label">Cache Management</legend>
-                        <div class="cache-info">
-                            <div class="cache-item">
-                                <span>Cached Years:</span>
-                                <span id="cachedYearsInfo" aria-live="polite">Loading...</span>
-                            </div>
-                            <div class="cache-item">
-                                <span>API Status:</span>
-                                <span id="apiStatus" class="status-connected" aria-live="polite">Connected</span>
-                            </div>
-                            <button class="action-btn" id="clearCacheBtn" aria-label="Clear all cached calendar data">
-                                <span>Clear Cache</span>
-                            </button>
-                        </div>
-                    </fieldset>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-
-    <!-- Notifications Container -->
-    <div class="notifications" id="notifications"></div>
 
     <!-- JavaScript -->
     <script src="app.js"></script>

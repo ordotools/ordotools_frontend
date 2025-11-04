@@ -22,6 +22,12 @@
     box-sizing: border-box;
 }
 
+html {
+    height: 100%;
+    overflow-x: hidden;
+    border: none;
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
     background: var(--background-color);
@@ -30,7 +36,11 @@ body {
     -webkit-font-smoothing: antialiased;
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+    height: 100vh;
+    overflow: hidden;
+    border: none;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Header */
@@ -41,6 +51,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    flex-shrink: 0;
 }
 
 .header-content {
@@ -51,6 +62,7 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+    position: relative;
 }
 
 .logo {
@@ -64,6 +76,9 @@ body {
 }
 
 .nav-controls {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
 }
@@ -76,6 +91,8 @@ body {
     padding: 0.25rem;
     border-radius: var(--radius);
     border: 1px solid var(--border-color);
+    min-width: 17ch; /* Width for longest month "September 2025" + 1em padding */
+    justify-content: center;
 }
 
 .nav-btn {
@@ -85,17 +102,18 @@ body {
     width: 1.75rem;
     height: 1.75rem;
     border: none;
-    background: var(--background-color);
+    background: var(--surface-color);
     color: var(--text-light);
     border-radius: 4px;
     cursor: pointer;
     transition: var(--transition);
-    font-size: 0.875rem;
+    font-size: 1rem;
+    font-weight: 500;
 }
 
 .nav-btn:hover {
-    background: var(--primary-color);
-    color: white;
+    background: var(--surface-color);
+    color: var(--text-color);
 }
 
 .nav-btn:disabled {
@@ -107,7 +125,7 @@ body {
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-color);
-    min-width: 7rem;
+    min-width: 15ch; /* Width for longest month "September 2025" + 1em padding */
     text-align: center;
     cursor: pointer;
     padding: 0.25rem 0.75rem;
@@ -159,12 +177,15 @@ body {
 
 /* Main Container */
 .container {
-    width: 100vw;
+    width: 100%;
     margin: 0;
     padding: 0;
-    height: calc(100vh - var(--header-height)); /* Subtract header height */
+    flex: 1 1 auto;
+    min-height: 0;
     display: flex;
     flex-direction: column;
+    border: none;
+    overflow: hidden;
 }
 
 /* Calendar */
@@ -174,10 +195,9 @@ body {
     border: none;
     box-shadow: none;
     overflow: hidden;
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    height: 100%;
     min-height: 0;
 }
 
@@ -204,16 +224,15 @@ body {
     grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(6, 1fr);
     flex: 1 1 auto;
-    height: 100%;
     min-height: 0;
     width: 100%;
+    overflow: hidden;
 }
 
 .day-cell {
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     padding: 0.5rem;
-    cursor: pointer;
     transition: var(--transition);
     position: relative;
     display: flex;
@@ -230,14 +249,6 @@ body {
     border-bottom: none;
 }
 
-/* Ensure calendar grid fills all available space */
-.calendar-wrapper {
-    contain: layout style paint;
-}
-
-.calendar-grid {
-    contain: layout style paint;
-}
 
 .day-cell:hover {
     background: var(--surface-color);
@@ -272,13 +283,21 @@ body {
 }
 
 .feast-name {
-    font-size: 0.65rem;
-    font-weight: 500;
-    line-height: 1.2;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
+    /* Narrow font options - uncomment one to try:
+    font-family: 'Arial Narrow', Arial, sans-serif;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-family: 'Open Sans Condensed', sans-serif;
+    font-family: 'PT Sans Narrow', sans-serif;
+    */
+    font-family: 'Roboto Condensed', sans-serif; /* Currently active */
 }
 
 .feast-rank {
@@ -342,7 +361,6 @@ body {
     margin-bottom: 1rem;
     padding: 1rem;
     transition: var(--transition);
-    cursor: pointer;
     position: relative;
 }
 
@@ -375,9 +393,10 @@ body {
 }
 
 .mobile-feast {
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: 1.25rem;
+    font-weight: 700;
     margin-bottom: 0.25rem;
+    font-family: 'Roboto Condensed', sans-serif; /* Narrow font for mobile */
 }
 
 .mobile-rank {
@@ -454,38 +473,38 @@ body {
     max-width: 32rem;
 }
 
-/* Modal */
-.modal-overlay {
+/* Modal (Native Dialog) */
+dialog.modal {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 1rem;
-    opacity: 0;
-    visibility: hidden;
-    transition: var(--transition);
-}
-
-.modal-overlay.open {
-    opacity: 1;
-    visibility: visible;
-}
-
-.modal {
+    margin: auto;
+    padding: 0;
+    border: none;
     background: var(--background-color);
     border-radius: var(--radius);
     box-shadow: var(--shadow-lg);
     max-width: 90vw;
     max-height: 90vh;
     overflow: hidden;
-    transform: scale(0.95);
-    transition: var(--transition);
+    width: auto;
+    height: auto;
 }
 
-.modal-overlay.open .modal {
+/* Native dialog backdrop */
+dialog.modal::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* Dialog animation */
+dialog.modal {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+dialog.modal[open] {
+    opacity: 1;
     transform: scale(1);
 }
 
@@ -568,183 +587,6 @@ body {
     flex: 1;
 }
 
-/* Settings */
-.settings-group {
-    margin-bottom: 2rem;
-}
-
-.settings-label {
-    display: block;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 1rem;
-}
-
-.checkbox-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background: var(--surface-color);
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: var(--transition);
-    margin-bottom: 0.5rem;
-}
-
-.checkbox-wrapper:hover {
-    background: #f1f3f4;
-}
-
-.checkbox {
-    width: 1.25rem;
-    height: 1.25rem;
-    border: 2px solid var(--border-color);
-    border-radius: 4px;
-    position: relative;
-    transition: var(--transition);
-}
-
-.checkbox input {
-    opacity: 0;
-    position: absolute;
-    inset: 0;
-    cursor: pointer;
-}
-
-.checkbox input:checked + .checkmark {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-}
-
-.checkbox input:checked + .checkmark::after {
-    opacity: 1;
-}
-
-.checkmark {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    transition: var(--transition);
-}
-
-.checkmark::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 0.75rem;
-    font-weight: bold;
-    opacity: 0;
-    transition: var(--transition);
-}
-
-.setting-desc {
-    font-size: 0.875rem;
-    color: var(--text-light);
-}
-
-.cache-info {
-    background: var(--surface-color);
-    padding: 1rem;
-    border-radius: var(--radius);
-}
-
-.cache-item {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-}
-
-.status-connected {
-    color: var(--primary-color);
-    font-weight: 500;
-}
-
-/* PDF Export */
-.pdf-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    margin-bottom: 2rem;
-}
-
-.pdf-option {
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: 1rem;
-    cursor: pointer;
-    transition: var(--transition);
-    text-align: center;
-}
-
-.pdf-option:hover {
-    background: var(--primary-color);
-    color: white;
-    border-color: var(--primary-color);
-}
-
-.pdf-option-icon {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-
-.pdf-option-title {
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.pdf-option-desc {
-    font-size: 0.875rem;
-    color: var(--text-light);
-}
-
-.pdf-option:hover .pdf-option-desc {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-/* Notifications */
-.notifications {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 1100;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.notification {
-    background: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    padding: 1rem;
-    box-shadow: var(--shadow-lg);
-    max-width: 20rem;
-    transform: translateX(100%);
-    opacity: 0;
-    transition: var(--transition);
-}
-
-.notification.show {
-    transform: translateX(0);
-    opacity: 1;
-}
-
-.notification.success {
-    border-left: 4px solid #16a34a;
-}
-
-.notification.error {
-    border-left: 4px solid #dc2626;
-}
-
-.notification.info {
-    border-left: 4px solid var(--primary-color);
-}
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -759,6 +601,9 @@ body {
     }
 
     .nav-controls {
+        position: relative;
+        left: auto;
+        transform: none;
         order: -1;
         width: 100%;
         justify-content: center;
@@ -778,17 +623,26 @@ body {
 
     .container {
         padding: 0;
-        height: calc(100vh - 80px); /* Adjust for smaller mobile header */
     }
 
     .calendar-wrapper {
         display: none;
     }
 
+    .day-cell {
+        border-right: none;
+        border-bottom: none;
+    }
+
     .mobile-view {
         display: flex;
         flex-direction: column;
-        padding: 0.5rem;
+        padding: 0;
+    }
+
+    .mobile-day {
+        margin-bottom: 0;
+        border-radius: 0;
     }
 
     .modal {
@@ -813,7 +667,8 @@ body {
 
     .mobile-day {
         padding: 0.75rem;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0;
+        border-radius: 0;
     }
 
     .modal-header,
@@ -822,28 +677,9 @@ body {
     }
 }
 
-/* Accessibility */
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-/* Focus styles */
-.nav-btn:focus,
-.action-btn:focus,
-.day-cell:focus,
-.mobile-day:focus,
-.modal-close:focus,
-.current-month:focus {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+/* Remove focus outlines */
+*:focus {
+    outline: none;
 }
 
 /* Reduced motion support */
