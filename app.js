@@ -7,6 +7,8 @@ class ModernLiturgicalCalendar {
         this.cache = new Map();
         this.isLoading = false;
         this.pendingRequests = new Map();
+        this.isInitialLoad = true;
+        this.shouldScrollToToday = false;
         
         // API Configuration
         this.apiBaseUrl = 'https://api-eky0.onrender.com';
@@ -83,6 +85,7 @@ class ModernLiturgicalCalendar {
 
     goToToday() {
         this.currentDate = new Date();
+        this.shouldScrollToToday = true;
         this.render();
         this.loadData();
     }
@@ -119,6 +122,11 @@ class ModernLiturgicalCalendar {
     renderMobileCalendar() {
         const container = document.getElementById('mobileView');
         container.innerHTML = '';
+        
+        // Reset scroll position when rendering new month (except when we're about to scroll to today)
+        if (!this.shouldScrollToToday && container) {
+            container.scrollTop = 0;
+        }
 
         const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
         const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
@@ -251,6 +259,13 @@ class ModernLiturgicalCalendar {
             if (Object.keys(allData).length > 0) {
                 this.populateCalendar(allData);
                 this.hideLoading();
+                if (window.innerWidth <= 768) {
+                    if (this.isInitialLoad || this.shouldScrollToToday) {
+                        this.scrollToToday();
+                        this.isInitialLoad = false;
+                        this.shouldScrollToToday = false;
+                    }
+                }
             } else {
                 this.showError('No liturgical data available for this period.');
             }
@@ -625,6 +640,40 @@ class ModernLiturgicalCalendar {
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
+    }
+
+    scrollToToday() {
+        // Only scroll on mobile
+        if (window.innerWidth > 768) return;
+
+        const mobileView = document.getElementById('mobileView');
+        if (!mobileView) return;
+        
+        const todayElement = mobileView.querySelector('.mobile-day.today');
+        
+        if (todayElement) {
+            // Use setTimeout to ensure DOM is fully rendered
+            setTimeout(() => {
+                todayElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+            }, 100);
+        } else {
+            // If today element not found yet, try again after a short delay
+            // This handles cases where DOM hasn't fully updated
+            setTimeout(() => {
+                const retryElement = mobileView.querySelector('.mobile-day.today');
+                if (retryElement) {
+                    retryElement.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                }
+            }, 300);
+        }
     }
 }
 
