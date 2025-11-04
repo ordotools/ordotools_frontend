@@ -153,6 +153,9 @@ class ModernLiturgicalCalendar {
         const feastName = document.createElement('div');
         feastName.className = 'feast-name';
 
+        const commemorations = document.createElement('div');
+        commemorations.className = 'commemorations';
+
         const feastRank = document.createElement('div');
         feastRank.className = 'feast-rank';
 
@@ -163,6 +166,7 @@ class ModernLiturgicalCalendar {
         specialIndicators.className = 'special-indicators';
 
         feastInfo.appendChild(feastName);
+        feastInfo.appendChild(commemorations);
         feastInfo.appendChild(feastRank);
 
         cell.appendChild(liturgicalIndicator);
@@ -199,6 +203,9 @@ class ModernLiturgicalCalendar {
         const feast = document.createElement('div');
         feast.className = 'mobile-feast';
 
+        const commemorations = document.createElement('div');
+        commemorations.className = 'mobile-commemorations';
+
         const rank = document.createElement('div');
         rank.className = 'mobile-rank';
 
@@ -211,6 +218,7 @@ class ModernLiturgicalCalendar {
         day.appendChild(liturgicalIndicator);
         day.appendChild(header);
         day.appendChild(feast);
+        day.appendChild(commemorations);
         day.appendChild(rank);
 
 
@@ -351,12 +359,25 @@ class ModernLiturgicalCalendar {
         if (!dayData) return;
 
         const feastElement = element.querySelector(isMobile ? '.mobile-feast' : '.feast-name');
+        const commemorationsElement = element.querySelector(isMobile ? '.mobile-commemorations' : '.commemorations');
         const rankElement = element.querySelector(isMobile ? '.mobile-rank' : '.feast-rank');
         const indicatorElement = element.querySelector('.liturgical-indicator');
         const specialIndicators = element.querySelector('.special-indicators');
 
         if (feastElement) {
             feastElement.textContent = dayData.feast_name || dayData.liturgical_season || '';
+        }
+
+        // Extract and display commemorations
+        if (commemorationsElement) {
+            const commNames = this.extractCommemorations(dayData);
+            if (commNames.length > 0) {
+                commemorationsElement.innerHTML = commNames.join('<br>');
+                commemorationsElement.style.display = 'block';
+            } else {
+                commemorationsElement.textContent = '';
+                commemorationsElement.style.display = 'none';
+            }
         }
 
         if (rankElement && this.settings.showFeastRanks) {
@@ -394,6 +415,45 @@ class ModernLiturgicalCalendar {
                 specialIndicators.appendChild(indicator);
             }
         }
+    }
+
+    extractCommemorations(dayData) {
+        const commNames = [];
+        
+        // First check if commemorations array has data
+        if (dayData.commemorations && Array.isArray(dayData.commemorations)) {
+            dayData.commemorations.forEach(comm => {
+                if (comm && comm.name) {
+                    commNames.push(comm.name);
+                }
+            });
+        }
+        
+        // If no commemorations in array, try parsing raw_data
+        if (commNames.length === 0 && dayData.raw_data) {
+            const rawData = dayData.raw_data;
+            ['com_1', 'com_2', 'com_3'].forEach(comKey => {
+                const comData = rawData[comKey];
+                if (comData && typeof comData === 'string' && comData.trim().startsWith('{')) {
+                    try {
+                        // Parse Python dict string (replace single quotes with double quotes for JSON)
+                        const jsonStr = comData.replace(/'/g, '"').replace(/True/g, 'true').replace(/False/g, 'false');
+                        const parsed = JSON.parse(jsonStr);
+                        if (parsed && parsed.name && parsed.name !== 'None' && parsed.name.trim()) {
+                            commNames.push(parsed.name);
+                        }
+                    } catch (e) {
+                        // If parsing fails, try to extract name using regex
+                        const nameMatch = comData.match(/['"]name['"]:\s*['"]([^'"]+)['"]/);
+                        if (nameMatch && nameMatch[1] && nameMatch[1] !== 'None') {
+                            commNames.push(nameMatch[1]);
+                        }
+                    }
+                }
+            });
+        }
+        
+        return commNames;
     }
 
     applyLiturgicalColor(element, color) {

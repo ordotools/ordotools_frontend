@@ -46,7 +46,7 @@ body {
 /* Header */
 .header {
     background: var(--background-color);
-    border-bottom: 1px solid var(--border-color);
+    border: none;
     padding: 0.5rem 0;
     position: sticky;
     top: 0;
@@ -204,19 +204,21 @@ body {
 .calendar-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    background: var(--surface-color);
+    background: var(--background-color);
+    border-top: none;
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
+    padding: 0.25rem 0;
 }
 
 .day-header {
-    padding: 0.5rem 0.25rem;
+    padding: 0.25rem 0.25rem;
     text-align: center;
-    font-weight: 600;
-    font-size: 0.7rem;
-    color: var(--text-light);
+    font-weight: 500;
+    font-size: 0.65rem;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .calendar-grid {
@@ -298,6 +300,22 @@ body {
     font-family: 'PT Sans Narrow', sans-serif;
     */
     font-family: 'Roboto Condensed', sans-serif; /* Currently active */
+}
+
+.commemorations {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    margin-top: 0.125rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.today .commemorations {
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .feast-rank {
@@ -397,6 +415,17 @@ body {
     font-weight: 700;
     margin-bottom: 0.25rem;
     font-family: 'Roboto Condensed', sans-serif; /* Narrow font for mobile */
+}
+
+.mobile-commemorations {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+}
+
+.today .mobile-commemorations {
+    color: rgba(255, 255, 255, 0.75);
 }
 
 .mobile-rank {
@@ -592,6 +621,7 @@ dialog.modal[open] {
 @media (max-width: 768px) {
     .header {
         padding: 0.25rem 0;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .header-content {
@@ -643,7 +673,13 @@ dialog.modal[open] {
     .mobile-day {
         margin-bottom: 0;
         border-radius: 0;
+        min-height: 25vh;
+        height: 25vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
+
 
     .modal {
         width: 95vw;
@@ -669,6 +705,11 @@ dialog.modal[open] {
         padding: 0.75rem;
         margin-bottom: 0;
         border-radius: 0;
+        min-height: 25vh;
+        height: 25vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .modal-header,
