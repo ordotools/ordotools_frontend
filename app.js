@@ -9,6 +9,7 @@ class ModernLiturgicalCalendar {
         this.pendingRequests = new Map();
         this.isInitialLoad = true;
         this.shouldScrollToToday = false;
+        this.datePicker = null;
         
         // API Configuration
         this.apiBaseUrl = 'https://api-eky0.onrender.com';
@@ -26,6 +27,7 @@ class ModernLiturgicalCalendar {
 
     init() {
         this.bindEvents();
+        this.initDatePicker();
         this.loadCacheFromStorage();
         this.render();
         this.loadData();
@@ -36,7 +38,7 @@ class ModernLiturgicalCalendar {
         document.getElementById('prevBtn').addEventListener('click', () => this.changeMonth(-1));
         document.getElementById('nextBtn').addEventListener('click', () => this.changeMonth(1));
         document.getElementById('todayBtn').addEventListener('click', () => this.goToToday());
-        document.getElementById('currentMonth').addEventListener('click', () => this.goToToday());
+        document.getElementById('currentMonth').addEventListener('click', () => this.openDatePicker());
 
         // Retry button
         document.getElementById('retryBtn').addEventListener('click', () => this.loadData());
@@ -46,6 +48,40 @@ class ModernLiturgicalCalendar {
 
         // Resize handler
         window.addEventListener('resize', () => this.handleResize());
+    }
+
+    initDatePicker() {
+        const input = document.getElementById('datePickerInput');
+        const currentMonthEl = document.getElementById('currentMonth');
+        if (!input || !currentMonthEl || typeof flatpickr === 'undefined') return;
+
+        this.datePicker = flatpickr(input, {
+            dateFormat: 'Y-m-d',
+            defaultDate: this.currentDate,
+            onChange: (selectedDates, dateStr, instance) => {
+                if (selectedDates.length > 0) {
+                    this.navigateToDate(selectedDates[0]);
+                    instance.close();
+                }
+            },
+            clickOpens: false,
+            positionElement: currentMonthEl,
+            position: 'below'
+        });
+    }
+
+    openDatePicker() {
+        if (this.datePicker) {
+            this.datePicker.setDate(this.currentDate);
+            this.datePicker.open();
+        }
+    }
+
+    navigateToDate(date) {
+        this.currentDate = new Date(date);
+        this.currentDate.setDate(1); // Set to first day of month
+        this.render();
+        this.loadData();
     }
 
     handleKeyboard(e) {
