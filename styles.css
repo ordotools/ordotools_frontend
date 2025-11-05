@@ -234,13 +234,17 @@ body {
 .day-cell {
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
-    padding: 0.5rem;
+    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
     transition: var(--transition);
     position: relative;
     display: flex;
     flex-direction: column;
     background: var(--background-color);
     overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .day-cell:nth-child(7n) {
@@ -271,7 +275,7 @@ body {
 }
 
 .day-number {
-    font-size: 0.9rem;
+    font-size: 2.2rem;
     font-weight: 600;
     margin-bottom: 0.25rem;
 }
@@ -399,7 +403,7 @@ body {
 }
 
 .mobile-date {
-    font-size: 1.5rem;
+    font-size: 4rem;
     font-weight: 700;
 }
 
