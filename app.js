@@ -38,7 +38,16 @@ class ModernLiturgicalCalendar {
         document.getElementById('prevBtn').addEventListener('click', () => this.changeMonth(-1));
         document.getElementById('nextBtn').addEventListener('click', () => this.changeMonth(1));
         document.getElementById('todayBtn').addEventListener('click', () => this.goToToday());
-        document.getElementById('currentMonth').addEventListener('click', () => this.openDatePicker());
+        
+        // Current month click handler
+        const currentMonthEl = document.getElementById('currentMonth');
+        currentMonthEl.addEventListener('click', () => this.openDatePicker());
+        currentMonthEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.openDatePicker();
+            }
+        });
 
         // Retry button
         document.getElementById('retryBtn').addEventListener('click', () => this.loadData());
@@ -63,17 +72,144 @@ class ModernLiturgicalCalendar {
                     this.navigateToDate(selectedDates[0]);
                     instance.close();
                 }
+                // Hide mobile input after date change
+                this.hideMobileInput();
             },
             clickOpens: false,
+            disableMobile: false, // Allow mobile mode for native date picker
             positionElement: currentMonthEl,
-            position: 'below'
+            position: 'below',
+            onReady: (selectedDates, dateStr, instance) => {
+                // Hide mobile input after flatpickr creates it
+                this.hideMobileInput();
+            },
+            onClose: (selectedDates, dateStr, instance) => {
+                // Hide mobile input when calendar closes
+                this.hideMobileInput();
+            }
+        });
+
+        // Hide mobile input immediately if it exists
+        this.hideMobileInput();
+    }
+
+    hideMobileInput() {
+        // Hide all mobile inputs when not in use
+        const mobileInputs = [
+            this.datePicker?.mobileInput,
+            document.querySelector('.flatpickr-mobile')
+        ].filter(Boolean);
+        
+        mobileInputs.forEach(mobileInput => {
+            if (mobileInput) {
+                mobileInput.style.position = 'absolute';
+                mobileInput.style.opacity = '0';
+                mobileInput.style.width = '1px';
+                mobileInput.style.height = '1px';
+                mobileInput.style.overflow = 'hidden';
+                mobileInput.style.clip = 'rect(0, 0, 0, 0)';
+                mobileInput.style.left = '-9999px';
+                mobileInput.style.pointerEvents = 'none';
+            }
         });
     }
 
     openDatePicker() {
-        if (this.datePicker) {
-            this.datePicker.setDate(this.currentDate);
-            this.datePicker.open();
+        if (!this.datePicker) {
+            console.warn('Date picker not initialized');
+            return;
+        }
+        
+        // Update the date in the picker
+        this.datePicker.setDate(this.currentDate, false);
+        
+        // On mobile, use the native date picker
+        if (window.innerWidth <= 768) {
+            // Try to get the mobile input - wait a bit if it doesn't exist yet
+            let mobileInput = this.datePicker.mobileInput || 
+                             document.querySelector('.flatpickr-mobile');
+            
+            if (!mobileInput) {
+                // Wait a moment for flatpickr to create it
+                setTimeout(() => {
+                    mobileInput = this.datePicker.mobileInput || 
+                                 document.querySelector('.flatpickr-mobile');
+                    if (mobileInput) {
+                        this.triggerMobileDatePicker(mobileInput);
+                    } else {
+                        // Fallback: open the calendar picker
+                        try {
+                            this.datePicker.open();
+                        } catch (e) {
+                            console.error('Failed to open date picker:', e);
+                        }
+                    }
+                }, 50);
+                return;
+            }
+            
+            this.triggerMobileDatePicker(mobileInput);
+        } else {
+            // Desktop: open the calendar picker
+            try {
+                // Ensure the calendar is positioned correctly
+                if (this.datePicker.isOpen) {
+                    this.datePicker.close();
+                }
+                // Small delay to ensure DOM is ready
+                setTimeout(() => {
+                    this.datePicker.open();
+                }, 10);
+            } catch (e) {
+                console.error('Failed to open date picker:', e);
+            }
+        }
+    }
+
+    triggerMobileDatePicker(mobileInput) {
+        // Position it over the current month element so users can click it directly
+        const currentMonthEl = document.getElementById('currentMonth');
+        if (currentMonthEl && mobileInput) {
+            const rect = currentMonthEl.getBoundingClientRect();
+            
+            // Make it visible and positioned over the month text
+            mobileInput.style.position = 'fixed';
+            mobileInput.style.top = rect.top + 'px';
+            mobileInput.style.left = rect.left + 'px';
+            mobileInput.style.width = rect.width + 'px';
+            mobileInput.style.height = rect.height + 'px';
+            mobileInput.style.opacity = '0.01'; // Nearly invisible but clickable
+            mobileInput.style.zIndex = '9999';
+            mobileInput.style.pointerEvents = 'auto';
+            mobileInput.style.visibility = 'visible';
+            mobileInput.style.border = 'none';
+            mobileInput.style.background = 'transparent';
+            mobileInput.style.cursor = 'pointer';
+            
+            // Set the value to match current date
+            const dateStr = this.currentDate.toISOString().split('T')[0];
+            mobileInput.value = dateStr;
+            
+            // Try to focus and click it (works on some browsers)
+            mobileInput.focus();
+            
+            // For browsers that allow programmatic clicks, try it
+            try {
+                mobileInput.click();
+            } catch (e) {
+                // If click fails, the input is still positioned for user interaction
+                console.log('Programmatic click not supported, user can click directly');
+            }
+            
+            // Hide it again after user interaction or when date changes
+            const hideAfterInteraction = () => {
+                setTimeout(() => {
+                    this.hideMobileInput();
+                }, 300);
+            };
+            
+            mobileInput.addEventListener('change', hideAfterInteraction, { once: true });
+            mobileInput.addEventListener('blur', hideAfterInteraction, { once: true });
         }
     }
 
