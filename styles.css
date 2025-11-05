@@ -87,10 +87,10 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: var(--surface-color);
+    background: transparent;
     padding: 0.25rem;
-    border-radius: var(--radius);
-    border: 1px solid var(--border-color);
+    border-radius: 0;
+    border: none;
     min-width: 17ch; /* Width for longest month "September 2025" + 1em padding */
     justify-content: center;
 }
@@ -102,7 +102,7 @@ body {
     width: 1.75rem;
     height: 1.75rem;
     border: none;
-    background: var(--surface-color);
+    background: transparent;
     color: var(--text-light);
     border-radius: 4px;
     cursor: pointer;
@@ -112,7 +112,7 @@ body {
 }
 
 .nav-btn:hover {
-    background: var(--surface-color);
+    background: transparent;
     color: var(--text-color);
 }
 
