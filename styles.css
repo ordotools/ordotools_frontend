@@ -309,7 +309,7 @@ body {
 .day-cell {
     border-right: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
-    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+    padding: 0.25rem;
     transition: var(--transition);
     position: relative;
     display: flex;
@@ -330,7 +330,6 @@ body {
     border-bottom: none;
 }
 
-
 .day-cell:hover {
     background: var(--surface-color);
 }
@@ -338,6 +337,12 @@ body {
 .day-cell.other-month {
     background: #fafafa;
     color: var(--text-muted);
+}
+
+/* Weekend days - Sunday (first column) and Saturday (last column) */
+.calendar-grid .day-cell:not(.today):not(.other-month):nth-child(7n+1),
+.calendar-grid .day-cell:not(.today):not(.other-month):nth-child(7n) {
+    background: #f0f4f8;
 }
 
 .day-cell.today {
@@ -350,9 +355,18 @@ body {
 }
 
 .day-number {
-    font-size: 2.2rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
+    font-size: 1.65rem;
+    font-weight: 700;
+    /* margin-bottom: 0.125rem; */
+    display: inline-block;
+    padding: 0;
+    width: fit-content;
+    text-shadow: 
+        -1px -1px 0 rgba(0, 0, 0, 0.5),
+        1px -1px 0 rgba(0, 0, 0, 0.5),
+        -1px 1px 0 rgba(0, 0, 0, 0.5),
+        1px 1px 0 rgba(0, 0, 0, 0.5);
+    -webkit-text-stroke: 0.5px rgba(0, 0, 0, 0.6);
 }
 
 .feast-info {
@@ -416,14 +430,14 @@ body {
     height: 100%;
 }
 
-/* Liturgical Colors */
-.liturgical-white .liturgical-indicator { background: #e5e7eb; }
-.liturgical-red .liturgical-indicator { background: #dc2626; }
-.liturgical-green .liturgical-indicator { background: #16a34a; }
-.liturgical-purple .liturgical-indicator { background: #7c3aed; }
-.liturgical-black .liturgical-indicator { background: #374151; }
-.liturgical-rose .liturgical-indicator { background: #ec4899; }
-.liturgical-gold .liturgical-indicator { background: #eab308; }
+/* Liturgical Colors - applied as text color to day-number */
+.liturgical-white .day-number { color: #ffffff; }
+.liturgical-red .day-number { color: #dc2626; }
+.liturgical-green .day-number { color: #16a34a; }
+.liturgical-purple .day-number { color: #7c3aed; }
+.liturgical-black .day-number { color: #374151; }
+.liturgical-rose .day-number { color: #ec4899; }
+.liturgical-gold .day-number { color: #ca8a04; }
 
 /* Special day indicators */
 .special-indicators {
