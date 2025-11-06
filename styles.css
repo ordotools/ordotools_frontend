@@ -354,13 +354,21 @@ body {
     background: var(--primary-hover);
 }
 
+.day-header-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.125rem;
+}
+
 .day-number {
-    font-size: 1.65rem;
+    font-size: 1.9rem;
     font-weight: 700;
-    /* margin-bottom: 0.125rem; */
     display: inline-block;
     padding: 0;
-    width: fit-content;
+    margin: 0;
+    flex-shrink: 0;
+    line-height: 1;
     text-shadow: 
         -1px -1px 0 rgba(0, 0, 0, 0.5),
         1px -1px 0 rgba(0, 0, 0, 0.5),
@@ -380,12 +388,12 @@ body {
 .feast-name {
     font-size: 0.95rem;
     font-weight: 700;
-    line-height: 1.3;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
+    line-height: 1;
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
     /* Narrow font options - uncomment one to try:
     font-family: 'Arial Narrow', Arial, sans-serif;
     font-family: 'Roboto Condensed', sans-serif;

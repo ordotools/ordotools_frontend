@@ -327,11 +327,16 @@ class ModernLiturgicalCalendar {
         dayNumber.className = 'day-number';
         dayNumber.textContent = date.getDate();
 
-        const feastInfo = document.createElement('div');
-        feastInfo.className = 'feast-info';
-
         const feastName = document.createElement('div');
         feastName.className = 'feast-name';
+
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'day-header-row';
+        dayHeader.appendChild(dayNumber);
+        dayHeader.appendChild(feastName);
+
+        const feastInfo = document.createElement('div');
+        feastInfo.className = 'feast-info';
 
         const commemorations = document.createElement('div');
         commemorations.className = 'commemorations';
@@ -345,12 +350,11 @@ class ModernLiturgicalCalendar {
         const specialIndicators = document.createElement('div');
         specialIndicators.className = 'special-indicators';
 
-        feastInfo.appendChild(feastName);
         feastInfo.appendChild(commemorations);
         feastInfo.appendChild(feastRank);
 
         cell.appendChild(liturgicalIndicator);
-        cell.appendChild(dayNumber);
+        cell.appendChild(dayHeader);
         cell.appendChild(feastInfo);
         cell.appendChild(specialIndicators);
 
