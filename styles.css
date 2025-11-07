@@ -104,15 +104,13 @@ body {
 .month-nav {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: space-between;
     background: transparent;
-    padding: 0.25rem;
+    padding: 0.25rem 0.5rem;
     border-radius: 0;
     border: none;
-    min-width: 0;
-    flex-shrink: 1;
-    justify-content: center;
-    max-width: 100%;
+    width: calc(14rem + 3em);
+    flex-shrink: 0;
 }
 
 .nav-btn {
