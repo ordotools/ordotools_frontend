@@ -333,7 +333,7 @@ body {
 }
 
 .day-cell.other-month {
-    background: #fafafa;
+    background: #f5f5f5;
     color: var(--text-muted);
 }
 
