@@ -536,6 +536,15 @@ class ModernLiturgicalCalendar {
             const dateKey = cell.dataset.date;
             const dayData = data[dateKey];
             this.populateCell(cell, dayData, false);
+            // Store dayData in cell for click handler
+            if (dayData) {
+                cell.dataset.dayData = JSON.stringify(dayData);
+                cell.style.cursor = 'pointer';
+                cell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.showDayModal(cell, dayData);
+                });
+            }
         });
 
         // Mobile calendar
@@ -543,6 +552,15 @@ class ModernLiturgicalCalendar {
             const dateKey = day.dataset.date;
             const dayData = data[dateKey];
             this.populateCell(day, dayData, true);
+            // Store dayData in day for click handler
+            if (dayData) {
+                day.dataset.dayData = JSON.stringify(dayData);
+                day.style.cursor = 'pointer';
+                day.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.showDayModal(day, dayData);
+                });
+            }
         });
     }
 
@@ -849,6 +867,195 @@ class ModernLiturgicalCalendar {
                     });
                 }
             }, 300);
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    showDayModal(element, dayData) {
+        // Close any existing modal
+        this.closeDayModal();
+
+        // Create modal element
+        const modal = document.createElement('div');
+        modal.className = 'day-modal';
+        modal.id = 'dayModal';
+
+        // Format date
+        const date = new Date(dayData.date);
+        const dateFormatter = new Intl.DateTimeFormat('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        const formattedDate = dateFormatter.format(date);
+
+        // Get commemorations
+        const commemorations = this.extractCommemorations(dayData);
+
+        // Parse mass data
+        const massData = this.parseMassData(dayData);
+
+        // Build modal content (escape HTML to prevent XSS)
+        const feastName = this.escapeHtml(dayData.feast_name || 'Liturgical Day');
+        const rank = dayData.feast_rank ? this.escapeHtml(dayData.feast_rank) : '';
+        const commsText = commemorations.map(c => this.escapeHtml(c)).join(', ');
+        const massText = massData ? this.escapeHtml(massData) : '';
+
+        let content = `
+            <div class="day-modal-header">
+                <div class="day-modal-title">${feastName}</div>
+                <button class="day-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="day-modal-content">
+                <div class="day-modal-section">
+                    <div class="day-modal-label">Date</div>
+                    <div class="day-modal-value">${formattedDate}</div>
+                </div>
+                ${rank ? `
+                <div class="day-modal-section">
+                    <div class="day-modal-label">Rank</div>
+                    <div class="day-modal-value">${rank}</div>
+                </div>
+                ` : ''}
+                ${commemorations.length > 0 ? `
+                <div class="day-modal-section">
+                    <div class="day-modal-label">Commemorations</div>
+                    <div class="day-modal-value">${commsText}</div>
+                </div>
+                ` : ''}
+                ${massText ? `
+                <div class="day-modal-section">
+                    <div class="day-modal-label">Mass</div>
+                    <div class="day-modal-value">${massText}</div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+
+        modal.innerHTML = content;
+
+        // Add close handler
+        modal.querySelector('.day-modal-close').addEventListener('click', () => this.closeDayModal());
+        
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeDayModal();
+            }
+        });
+
+        // Close on Escape key
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeDayModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+
+        document.body.appendChild(modal);
+
+        // Position modal relative to clicked element (use setTimeout to ensure DOM is ready)
+        setTimeout(() => {
+            this.positionModal(modal, element);
+        }, 0);
+    }
+
+    positionModal(modal, element) {
+        const rect = element.getBoundingClientRect();
+        const modalRect = modal.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const spacing = 10;
+
+        // Determine if modal should go right or left
+        const spaceRight = viewportWidth - rect.right;
+        const spaceLeft = rect.left;
+        const goRight = spaceRight >= spaceLeft && spaceRight >= 300;
+
+        // Determine vertical position (center on element)
+        let top = rect.top + (rect.height / 2) - (modalRect.height / 2);
+        
+        // Adjust if modal goes off screen vertically
+        if (top < spacing) {
+            top = spacing;
+        } else if (top + modalRect.height > viewportHeight - spacing) {
+            top = viewportHeight - modalRect.height - spacing;
+        }
+
+        // Set horizontal position
+        let left;
+        if (goRight) {
+            left = rect.right + spacing;
+        } else {
+            left = rect.left - modalRect.width - spacing;
+        }
+
+        // Ensure modal stays within viewport
+        if (left < spacing) {
+            left = spacing;
+        } else if (left + modalRect.width > viewportWidth - spacing) {
+            left = viewportWidth - modalRect.width - spacing;
+        }
+
+        modal.style.position = 'fixed';
+        modal.style.top = `${top}px`;
+        modal.style.left = `${left}px`;
+        modal.style.zIndex = '10000';
+    }
+
+    parseMassData(dayData) {
+        if (!dayData.raw_data || !dayData.raw_data.mass) {
+            return null;
+        }
+
+        const massStr = dayData.raw_data.mass;
+        
+        try {
+            // Parse Python dict string
+            const jsonStr = massStr
+                .replace(/'/g, '"')
+                .replace(/True/g, 'true')
+                .replace(/False/g, 'false')
+                .replace(/None/g, 'null');
+            
+            const massObj = JSON.parse(jsonStr);
+            
+            // Format mass data
+            const parts = [];
+            for (const [key, value] of Object.entries(massObj)) {
+                if (value && typeof value === 'object') {
+                    const massParts = [];
+                    if (value.int) massParts.push(`Introit: ${value.int}`);
+                    if (value.glo !== undefined) massParts.push(`Gloria: ${value.glo ? 'Yes' : 'No'}`);
+                    if (value.cre !== undefined) massParts.push(`Creed: ${value.cre ? 'Yes' : 'No'}`);
+                    if (value.pre) massParts.push(`Preface: ${value.pre}`);
+                    if (value.ep) massParts.push(`Epistle: ${value.ep}`);
+                    if (value.gos) massParts.push(`Gospel: ${value.gos}`);
+                    
+                    if (massParts.length > 0) {
+                        parts.push(`${key}: ${massParts.join(', ')}`);
+                    }
+                }
+            }
+            
+            return parts.length > 0 ? parts.join('; ') : null;
+        } catch (e) {
+            // If parsing fails, return raw string (cleaned up)
+            return massStr.length > 200 ? massStr.substring(0, 200) + '...' : massStr;
+        }
+    }
+
+    closeDayModal() {
+        const modal = document.getElementById('dayModal');
+        if (modal) {
+            modal.remove();
         }
     }
 }
