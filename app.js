@@ -885,8 +885,9 @@ class ModernLiturgicalCalendar {
         modal.className = 'day-modal';
         modal.id = 'dayModal';
 
-        // Format date
-        const date = new Date(dayData.date);
+        // Format date (parse as local date to avoid timezone issues)
+        const dateParts = dayData.date.split('-');
+        const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
         const dateFormatter = new Intl.DateTimeFormat('en-US', { 
             weekday: 'long', 
             year: 'numeric', 
@@ -899,17 +900,25 @@ class ModernLiturgicalCalendar {
         const commemorations = this.extractCommemorations(dayData);
 
         // Parse mass data
-        const massData = this.parseMassData(dayData);
+        const massData = this.parseMassData(dayData, commemorations);
 
-        // Build modal content (escape HTML to prevent XSS)
+        // Build modal content (escape HTML to prevent XSS, except for Mass which contains safe HTML)
         const feastName = this.escapeHtml(dayData.feast_name || 'Liturgical Day');
         const rank = dayData.feast_rank ? this.escapeHtml(dayData.feast_rank) : '';
         const commsText = commemorations.map(c => this.escapeHtml(c)).join(', ');
-        const massText = massData ? this.escapeHtml(massData) : '';
+        // Mass data contains safe HTML tags (<em>) so we don't escape it, but we escape the values within parseMassData
+        const massText = massData || '';
+        const liturgicalColor = dayData.liturgical_color || '';
+
+        // Get color class for the circle
+        const colorClass = liturgicalColor ? this.getLiturgicalColorClass(liturgicalColor) : '';
 
         let content = `
             <div class="day-modal-header">
-                <div class="day-modal-title">${feastName}</div>
+                <div class="day-modal-title">
+                    ${colorClass ? `<span class="day-modal-color-circle ${colorClass}"></span>` : ''}
+                    ${feastName}
+                </div>
                 <button class="day-modal-close" aria-label="Close">&times;</button>
             </div>
             <div class="day-modal-content">
@@ -1010,7 +1019,7 @@ class ModernLiturgicalCalendar {
         modal.style.zIndex = '10000';
     }
 
-    parseMassData(dayData) {
+    parseMassData(dayData, commemorations = []) {
         if (!dayData.raw_data || !dayData.raw_data.mass) {
             return null;
         }
@@ -1027,20 +1036,46 @@ class ModernLiturgicalCalendar {
             
             const massObj = JSON.parse(jsonStr);
             
-            // Format mass data
+            // Format mass data according to specification
             const parts = [];
             for (const [key, value] of Object.entries(massObj)) {
                 if (value && typeof value === 'object') {
-                    const massParts = [];
-                    if (value.int) massParts.push(`Introit: ${value.int}`);
-                    if (value.glo !== undefined) massParts.push(`Gloria: ${value.glo ? 'Yes' : 'No'}`);
-                    if (value.cre !== undefined) massParts.push(`Creed: ${value.cre ? 'Yes' : 'No'}`);
-                    if (value.pre) massParts.push(`Preface: ${value.pre}`);
-                    if (value.ep) massParts.push(`Epistle: ${value.ep}`);
-                    if (value.gos) massParts.push(`Gospel: ${value.gos}`);
+                    const formattedParts = [];
                     
-                    if (massParts.length > 0) {
-                        parts.push(`${key}: ${massParts.join(', ')}`);
+                    // Introit in italics, then comma (escape HTML in the value itself)
+                    if (value.int) {
+                        const introitEscaped = this.escapeHtml(value.int);
+                        formattedParts.push(`<em>${introitEscaped}</em>,`);
+                    }
+                    
+                    // Gloria and Creed
+                    if (value.glo === true) {
+                        formattedParts.push('Gl,');
+                    }
+                    if (value.cre === true) {
+                        formattedParts.push('Cr,');
+                    }
+                    
+                    // Commemorations: "1 com" first comm, "2 com" second comm, etc. (escape HTML, comma delineated)
+                    const commParts = [];
+                    commemorations.forEach((comm, index) => {
+                        const commEscaped = this.escapeHtml(comm);
+                        commParts.push(`${index + 1} com ${commEscaped}`);
+                    });
+                    if (commParts.length > 0) {
+                        formattedParts.push(commParts.join(', ') + ',');
+                    }
+                    
+                    // Preface in italics if it exists (escape HTML in the value itself)
+                    if (value.pre) {
+                        const prefaceEscaped = this.escapeHtml(value.pre);
+                        formattedParts.push(`Preface <em>${prefaceEscaped}</em>`);
+                    }
+                    
+                    if (formattedParts.length > 0) {
+                        // Join parts with spaces (no key prefix)
+                        let formatted = formattedParts.join(' ');
+                        parts.push(formatted);
                     }
                 }
             }
