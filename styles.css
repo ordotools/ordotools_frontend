@@ -898,7 +898,7 @@ dialog.modal[open] {
         padding: 1rem;
     }
 
-    .day-modal {
+    .day-modal:not(.day-modal-drawer) {
         max-width: 90vw;
         min-width: 250px;
     }
@@ -909,6 +909,10 @@ dialog.modal[open] {
 
     .day-modal-content {
         padding: 0.5rem 0.75rem;
+    }
+
+    .day-modal-drawer .day-modal-content {
+        padding-top: 0.5rem;
     }
 }
 
@@ -930,6 +934,66 @@ dialog.modal[open] {
     animation: modalFadeIn 0.2s ease;
 }
 
+/* Mobile Drawer Styles */
+.day-modal-drawer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-width: 100%;
+    min-width: 100%;
+    width: 100%;
+    border-radius: var(--radius) var(--radius) 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    animation: none;
+}
+
+.day-modal-drawer.drawer-open {
+    transform: translateY(0);
+}
+
+.day-modal-drawer.drawer-closing {
+    transform: translateY(100%);
+}
+
+.day-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.day-modal-backdrop.backdrop-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.day-modal-drag-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    margin: 8px auto;
+    cursor: grab;
+    flex-shrink: 0;
+}
+
+.day-modal-drag-handle:active {
+    cursor: grabbing;
+}
+
 @keyframes modalFadeIn {
     from {
         opacity: 0;
@@ -949,6 +1013,18 @@ dialog.modal[open] {
     border-bottom: 1px solid var(--border-color);
     background: var(--surface-color);
     border-radius: var(--radius) var(--radius) 0 0;
+    flex-shrink: 0;
+    touch-action: none;
+}
+
+.day-modal-drawer .day-modal-header {
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.day-modal-drawer .day-modal-header:active {
+    cursor: grabbing;
 }
 
 .day-modal-title {
@@ -1007,6 +1083,15 @@ dialog.modal[open] {
     padding: 0.75rem 1rem;
     max-height: 60vh;
     overflow-y: auto;
+}
+
+.day-modal-drawer .day-modal-content {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    flex: 1;
+    min-height: 0;
+    padding-top: 0.5rem;
 }
 
 .day-modal-section {

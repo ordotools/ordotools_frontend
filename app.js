@@ -880,21 +880,15 @@ class ModernLiturgicalCalendar {
         // Close any existing modal
         this.closeDayModal();
 
+        const isMobile = window.innerWidth <= 768;
+
+        // On mobile, scroll the clicked day to the top
+        // We'll handle this in setupDrawerBehavior after calculating height
+
         // Create modal element
         const modal = document.createElement('div');
-        modal.className = 'day-modal';
+        modal.className = isMobile ? 'day-modal day-modal-drawer' : 'day-modal';
         modal.id = 'dayModal';
-
-        // Format date (parse as local date to avoid timezone issues)
-        const dateParts = dayData.date.split('-');
-        const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
-        const dateFormatter = new Intl.DateTimeFormat('en-US', { 
-            weekday: 'long', 
-            year: 'numeric', 
-            month: 'long', 
-            day: 'numeric' 
-        });
-        const formattedDate = dateFormatter.format(date);
 
         // Get commemorations
         const commemorations = this.extractCommemorations(dayData);
@@ -903,61 +897,104 @@ class ModernLiturgicalCalendar {
         const massData = this.parseMassData(dayData, commemorations);
 
         // Build modal content (escape HTML to prevent XSS, except for Mass which contains safe HTML)
-        const feastName = this.escapeHtml(dayData.feast_name || 'Liturgical Day');
         const rank = dayData.feast_rank ? this.escapeHtml(dayData.feast_rank) : '';
         const commsText = commemorations.map(c => this.escapeHtml(c)).join(', ');
         // Mass data contains safe HTML tags (<em>) so we don't escape it, but we escape the values within parseMassData
         const massText = massData || '';
-        const liturgicalColor = dayData.liturgical_color || '';
 
-        // Get color class for the circle
-        const colorClass = liturgicalColor ? this.getLiturgicalColorClass(liturgicalColor) : '';
+        let content = '';
+        
+        if (isMobile) {
+            // Mobile drawer: no header, no date, no close button
+            content = `
+                <div class="day-modal-drag-handle"></div>
+                <div class="day-modal-content">
+                    ${rank ? `
+                    <div class="day-modal-section">
+                        <div class="day-modal-label">Rank</div>
+                        <div class="day-modal-value">${rank}</div>
+                    </div>
+                    ` : ''}
+                    ${commemorations.length > 0 ? `
+                    <div class="day-modal-section">
+                        <div class="day-modal-label">Commemorations</div>
+                        <div class="day-modal-value">${commsText}</div>
+                    </div>
+                    ` : ''}
+                    ${massText ? `
+                    <div class="day-modal-section">
+                        <div class="day-modal-label">Mass</div>
+                        <div class="day-modal-value">${massText}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            // Desktop: keep original structure with header and date
+            const dateParts = dayData.date.split('-');
+            const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+            const dateFormatter = new Intl.DateTimeFormat('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            const formattedDate = dateFormatter.format(date);
+            const feastName = this.escapeHtml(dayData.feast_name || 'Liturgical Day');
+            const liturgicalColor = dayData.liturgical_color || '';
+            const colorClass = liturgicalColor ? this.getLiturgicalColorClass(liturgicalColor) : '';
 
-        let content = `
-            <div class="day-modal-header">
-                <div class="day-modal-title">
-                    ${colorClass ? `<span class="day-modal-color-circle ${colorClass}"></span>` : ''}
-                    ${feastName}
+            content = `
+                <div class="day-modal-header">
+                    <div class="day-modal-title">
+                        ${colorClass ? `<span class="day-modal-color-circle ${colorClass}"></span>` : ''}
+                        ${feastName}
+                    </div>
+                    <button class="day-modal-close" aria-label="Close">&times;</button>
                 </div>
-                <button class="day-modal-close" aria-label="Close">&times;</button>
-            </div>
-            <div class="day-modal-content">
-                <div class="day-modal-section">
-                    <div class="day-modal-label">Date</div>
-                    <div class="day-modal-value">${formattedDate}</div>
+                <div class="day-modal-content">
+                    <div class="day-modal-section">
+                        <div class="day-modal-label">Date</div>
+                        <div class="day-modal-value">${formattedDate}</div>
+                    </div>
+                    ${rank ? `
+                    <div class="day-modal-section">
+                        <div class="day-modal-label">Rank</div>
+                        <div class="day-modal-value">${rank}</div>
+                    </div>
+                    ` : ''}
+                    ${commemorations.length > 0 ? `
+                    <div class="day-modal-section">
+                        <div class="day-modal-label">Commemorations</div>
+                        <div class="day-modal-value">${commsText}</div>
+                    </div>
+                    ` : ''}
+                    ${massText ? `
+                    <div class="day-modal-section">
+                        <div class="day-modal-label">Mass</div>
+                        <div class="day-modal-value">${massText}</div>
+                    </div>
+                    ` : ''}
                 </div>
-                ${rank ? `
-                <div class="day-modal-section">
-                    <div class="day-modal-label">Rank</div>
-                    <div class="day-modal-value">${rank}</div>
-                </div>
-                ` : ''}
-                ${commemorations.length > 0 ? `
-                <div class="day-modal-section">
-                    <div class="day-modal-label">Commemorations</div>
-                    <div class="day-modal-value">${commsText}</div>
-                </div>
-                ` : ''}
-                ${massText ? `
-                <div class="day-modal-section">
-                    <div class="day-modal-label">Mass</div>
-                    <div class="day-modal-value">${massText}</div>
-                </div>
-                ` : ''}
-            </div>
-        `;
+            `;
+        }
 
         modal.innerHTML = content;
 
-        // Add close handler
-        modal.querySelector('.day-modal-close').addEventListener('click', () => this.closeDayModal());
-        
-        // Close on backdrop click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                this.closeDayModal();
+        // Add close handler for desktop only
+        if (!isMobile) {
+            const closeBtn = modal.querySelector('.day-modal-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.closeDayModal());
             }
-        });
+            
+            // Close on backdrop click (desktop only)
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeDayModal();
+                }
+            });
+        }
 
         // Close on Escape key
         const escapeHandler = (e) => {
@@ -970,10 +1007,105 @@ class ModernLiturgicalCalendar {
 
         document.body.appendChild(modal);
 
-        // Position modal relative to clicked element (use setTimeout to ensure DOM is ready)
+        // On mobile, set up drawer behavior and calculate height
+        if (isMobile) {
+            this.setupDrawerBehavior(modal, element);
+        } else {
+            // Desktop: position modal relative to clicked element
+            setTimeout(() => {
+                this.positionModal(modal, element);
+            }, 0);
+        }
+    }
+
+    setupDrawerBehavior(modal, dayElement) {
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+        let initialTransform = 0;
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'day-modal-backdrop';
+        backdrop.id = 'dayModalBackdrop';
+        document.body.insertBefore(backdrop, modal);
+
+        // Touch handlers
+        const handleTouchStart = (e) => {
+            if (e.target.closest('.day-modal-content')) {
+                // Don't start dragging if touching the content area (allow scrolling)
+                return;
+            }
+            startY = e.touches[0].clientY;
+            initialTransform = currentY;
+            isDragging = true;
+        };
+
+        const handleTouchMove = (e) => {
+            if (!isDragging) return;
+            
+            currentY = initialTransform + (e.touches[0].clientY - startY);
+            
+            // Only allow downward dragging
+            if (currentY > 0) {
+                modal.style.transform = `translateY(${currentY}px)`;
+                const opacity = 1 - (currentY / 300);
+                backdrop.style.opacity = Math.max(0, opacity);
+            }
+        };
+
+        const handleTouchEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+
+            // If dragged down more than 100px, close the drawer
+            if (currentY > 100) {
+                this.closeDayModal();
+            } else {
+                // Snap back to open position
+                currentY = 0;
+                modal.style.transform = '';
+                backdrop.style.opacity = '';
+            }
+        };
+
+        // Add touch handlers to drag handle only
+        const dragHandle = modal.querySelector('.day-modal-drag-handle');
+        
+        if (dragHandle) {
+            dragHandle.addEventListener('touchstart', handleTouchStart, { passive: false });
+            dragHandle.addEventListener('touchmove', handleTouchMove, { passive: false });
+            dragHandle.addEventListener('touchend', handleTouchEnd, { passive: false });
+        }
+
+        // Close on backdrop click
+        backdrop.addEventListener('click', () => this.closeDayModal());
+
+        // First, scroll the day to the top, then calculate drawer height
+        dayElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest'
+        });
+
+        // Wait for scroll animation to complete, then calculate and show drawer
         setTimeout(() => {
-            this.positionModal(modal, element);
-        }, 0);
+            // Calculate drawer height: from bottom of viewport to bottom of selected day
+            const viewportHeight = window.innerHeight;
+            const dayRect = dayElement.getBoundingClientRect();
+            const dayBottom = dayRect.bottom;
+            const drawerHeight = viewportHeight - dayBottom;
+            const finalHeight = Math.max(200, drawerHeight); // Minimum 200px height
+
+            // Set drawer height
+            modal.style.height = `${finalHeight}px`;
+            modal.style.maxHeight = `${finalHeight}px`;
+
+            // Show drawer with animation
+            requestAnimationFrame(() => {
+                modal.classList.add('drawer-open');
+                backdrop.classList.add('backdrop-visible');
+            });
+        }, 500); // Wait for scroll animation (typically 300-500ms)
     }
 
     positionModal(modal, element) {
@@ -1089,8 +1221,31 @@ class ModernLiturgicalCalendar {
 
     closeDayModal() {
         const modal = document.getElementById('dayModal');
+        const backdrop = document.getElementById('dayModalBackdrop');
+        
         if (modal) {
-            modal.remove();
+            const isMobile = modal.classList.contains('day-modal-drawer');
+            
+            if (isMobile) {
+                // Animate drawer closing
+                modal.classList.remove('drawer-open');
+                modal.classList.add('drawer-closing');
+                if (backdrop) {
+                    backdrop.classList.remove('backdrop-visible');
+                }
+                
+                // Remove after animation
+                setTimeout(() => {
+                    modal.remove();
+                    if (backdrop) backdrop.remove();
+                }, 300);
+            } else {
+                modal.remove();
+            }
+        }
+        
+        if (backdrop && !modal) {
+            backdrop.remove();
         }
     }
 }
