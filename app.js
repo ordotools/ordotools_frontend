@@ -11,17 +11,14 @@ class ModernLiturgicalCalendar {
         this.shouldScrollToToday = false;
         this.datePicker = null;
         
-        // API Configuration
-        this.apiBaseUrl = 'https://api-eky0.onrender.com';
+        this.apiBaseUrl = 'https://api.ordotools.org';
         
-        // Settings - hardcoded to show everything
         this.settings = {
             showFeastRanks: true,
             showLiturgicalColors: true,
             showCommemorations: true
         };
         
-        // Initialize
         this.init();
     }
 
