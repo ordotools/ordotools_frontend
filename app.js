@@ -245,7 +245,7 @@ class ModernLiturgicalCalendar {
         header.className = 'mobile-day-header';
 
         const dateEl = document.createElement('div');
-        dateEl.className = 'mobile-date';
+        dateEl.className = 'day-number';
         dateEl.textContent = date.getDate();
 
         const dayName = document.createElement('div');
