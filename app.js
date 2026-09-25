@@ -5,11 +5,11 @@ class ModernLiturgicalCalendar {
         this.today = new Date();
         this.today.setHours(0, 0, 0, 0);
         this.cache = new Map();
-        this.isLoading = false;
+        this.loadToken = 0;
+        this.monthData = {};
         this.pendingRequests = new Map();
         this.isInitialLoad = true;
         this.shouldScrollToToday = false;
-        this.datePicker = null;
         
         this.apiBaseUrl = 'https://api.ordotools.org';
         
@@ -49,164 +49,42 @@ class ModernLiturgicalCalendar {
         // Retry button
         document.getElementById('retryBtn').addEventListener('click', () => this.loadData());
 
+        // Day details: one delegated handler per view instead of per-cell listeners
+        const openDay = (e) => {
+            if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+            const el = e.target.closest('[data-date]');
+            const dayData = el && this.monthData[el.dataset.date];
+            if (!dayData) return;
+            e.preventDefault();
+            this.showDayModal(el, dayData);
+        };
+        for (const id of ['calendarGrid', 'mobileView']) {
+            const view = document.getElementById(id);
+            view.addEventListener('click', openDay);
+            view.addEventListener('keydown', openDay);
+        }
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => this.handleKeyboard(e));
-
-        // Resize handler
-        window.addEventListener('resize', () => this.handleResize());
     }
 
     initDatePicker() {
         const input = document.getElementById('datePickerInput');
-        const currentMonthEl = document.getElementById('currentMonth');
-        if (!input || !currentMonthEl || typeof flatpickr === 'undefined') return;
-
-        this.datePicker = flatpickr(input, {
-            dateFormat: 'Y-m-d',
-            defaultDate: this.currentDate,
-            onChange: (selectedDates, dateStr, instance) => {
-                if (selectedDates.length > 0) {
-                    this.navigateToDate(selectedDates[0]);
-                    instance.close();
-                }
-                // Hide mobile input after date change
-                this.hideMobileInput();
-            },
-            clickOpens: false,
-            disableMobile: false, // Allow mobile mode for native date picker
-            positionElement: currentMonthEl,
-            position: 'below',
-            onReady: (selectedDates, dateStr, instance) => {
-                // Hide mobile input after flatpickr creates it
-                this.hideMobileInput();
-            },
-            onClose: (selectedDates, dateStr, instance) => {
-                // Hide mobile input when calendar closes
-                this.hideMobileInput();
-            }
-        });
-
-        // Hide mobile input immediately if it exists
-        this.hideMobileInput();
-    }
-
-    hideMobileInput() {
-        // Hide all mobile inputs when not in use
-        const mobileInputs = [
-            this.datePicker?.mobileInput,
-            document.querySelector('.flatpickr-mobile')
-        ].filter(Boolean);
-        
-        mobileInputs.forEach(mobileInput => {
-            if (mobileInput) {
-                mobileInput.style.position = 'absolute';
-                mobileInput.style.opacity = '0';
-                mobileInput.style.width = '1px';
-                mobileInput.style.height = '1px';
-                mobileInput.style.overflow = 'hidden';
-                mobileInput.style.clip = 'rect(0, 0, 0, 0)';
-                mobileInput.style.left = '-9999px';
-                mobileInput.style.pointerEvents = 'none';
-            }
+        // Browsers without a native month picker report type "text"; fall back to a date picker
+        if (input.type !== 'month') input.type = 'date';
+        input.addEventListener('change', () => {
+            const [year, month] = input.value.split('-').map(Number);
+            if (year && month) this.navigateToDate(new Date(year, month - 1, 1));
         });
     }
 
     openDatePicker() {
-        if (!this.datePicker) {
-            console.warn('Date picker not initialized');
-            return;
-        }
-        
-        // Update the date in the picker
-        this.datePicker.setDate(this.currentDate, false);
-        
-        // On mobile, use the native date picker
-        if (window.innerWidth <= 768) {
-            // Try to get the mobile input - wait a bit if it doesn't exist yet
-            let mobileInput = this.datePicker.mobileInput || 
-                             document.querySelector('.flatpickr-mobile');
-            
-            if (!mobileInput) {
-                // Wait a moment for flatpickr to create it
-                setTimeout(() => {
-                    mobileInput = this.datePicker.mobileInput || 
-                                 document.querySelector('.flatpickr-mobile');
-                    if (mobileInput) {
-                        this.triggerMobileDatePicker(mobileInput);
-                    } else {
-                        // Fallback: open the calendar picker
-                        try {
-                            this.datePicker.open();
-                        } catch (e) {
-                            console.error('Failed to open date picker:', e);
-                        }
-                    }
-                }, 50);
-                return;
-            }
-            
-            this.triggerMobileDatePicker(mobileInput);
-        } else {
-            // Desktop: open the calendar picker
-            try {
-                // Ensure the calendar is positioned correctly
-                if (this.datePicker.isOpen) {
-                    this.datePicker.close();
-                }
-                // Small delay to ensure DOM is ready
-                setTimeout(() => {
-                    this.datePicker.open();
-                }, 10);
-            } catch (e) {
-                console.error('Failed to open date picker:', e);
-            }
-        }
-    }
-
-    triggerMobileDatePicker(mobileInput) {
-        // Position it over the current month element so users can click it directly
-        const currentMonthEl = document.getElementById('currentMonth');
-        if (currentMonthEl && mobileInput) {
-            const rect = currentMonthEl.getBoundingClientRect();
-            
-            // Make it visible and positioned over the month text
-            mobileInput.style.position = 'fixed';
-            mobileInput.style.top = rect.top + 'px';
-            mobileInput.style.left = rect.left + 'px';
-            mobileInput.style.width = rect.width + 'px';
-            mobileInput.style.height = rect.height + 'px';
-            mobileInput.style.opacity = '0.01'; // Nearly invisible but clickable
-            mobileInput.style.zIndex = '9999';
-            mobileInput.style.pointerEvents = 'auto';
-            mobileInput.style.visibility = 'visible';
-            mobileInput.style.border = 'none';
-            mobileInput.style.background = 'transparent';
-            mobileInput.style.cursor = 'pointer';
-            
-            // Set the value to match current date
-            const dateStr = this.currentDate.toISOString().split('T')[0];
-            mobileInput.value = dateStr;
-            
-            // Try to focus and click it (works on some browsers)
-            mobileInput.focus();
-            
-            // For browsers that allow programmatic clicks, try it
-            try {
-                mobileInput.click();
-            } catch (e) {
-                // If click fails, the input is still positioned for user interaction
-                console.log('Programmatic click not supported, user can click directly');
-            }
-            
-            // Hide it again after user interaction or when date changes
-            const hideAfterInteraction = () => {
-                setTimeout(() => {
-                    this.hideMobileInput();
-                }, 300);
-            };
-            
-            mobileInput.addEventListener('change', hideAfterInteraction, { once: true });
-            mobileInput.addEventListener('blur', hideAfterInteraction, { once: true });
+        const input = document.getElementById('datePickerInput');
+        input.value = this.formatDateKey(this.currentDate).slice(0, input.type === 'month' ? 7 : 10);
+        try {
+            input.showPicker();
+        } catch {
+            input.focus();
         }
     }
 
@@ -219,6 +97,7 @@ class ModernLiturgicalCalendar {
 
     handleKeyboard(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (document.getElementById('dayModal')) return;
 
         switch (e.key) {
             case 'ArrowLeft':
@@ -236,14 +115,6 @@ class ModernLiturgicalCalendar {
                 this.goToToday();
                 break;
         }
-    }
-
-    handleResize() {
-        clearTimeout(this.resizeTimeout);
-        this.resizeTimeout = setTimeout(() => {
-            this.render();
-            this.refreshDisplay();
-        }, 250);
     }
 
     changeMonth(delta) {
@@ -310,6 +181,7 @@ class ModernLiturgicalCalendar {
     createDayCell(date) {
         const cell = document.createElement('div');
         cell.className = 'day-cell';
+        cell.tabIndex = 0;
         cell.dataset.date = this.formatDateKey(date);
 
         if (date.getMonth() !== this.currentDate.getMonth()) {
@@ -362,6 +234,7 @@ class ModernLiturgicalCalendar {
     createMobileDay(date) {
         const day = document.createElement('div');
         day.className = 'mobile-day';
+        day.tabIndex = 0;
         day.dataset.date = this.formatDateKey(date);
 
         if (date.getTime() === this.today.getTime()) {
@@ -407,46 +280,39 @@ class ModernLiturgicalCalendar {
     }
 
     async loadData() {
-        if (this.isLoading) return;
-
-        this.isLoading = true;
-        this.showLoading();
+        // Newer calls supersede older ones, so fast navigation never leaves a month blank
+        const token = ++this.loadToken;
+        const currentYear = this.currentDate.getFullYear();
+        const currentMonth = this.currentDate.getMonth();
+        const yearsNeeded = this.getYearsNeeded(currentYear, currentMonth);
 
         try {
-            const currentYear = this.currentDate.getFullYear();
-            const currentMonth = this.currentDate.getMonth();
-            const yearsNeeded = this.getYearsNeeded(currentYear, currentMonth);
-
-            const allData = {};
-            for (const year of yearsNeeded) {
-                try {
-                    const yearData = await this.loadYearData(year);
-                    if (yearData) {
-                        Object.assign(allData, yearData);
-                    }
-                } catch (error) {
-                    console.warn(`Failed to load year ${year}:`, error);
-                }
+            // Only show the spinner when we actually have to hit the network
+            if (yearsNeeded.some(year => !this.cache.has(year))) {
+                this.showLoading();
             }
 
-            if (Object.keys(allData).length > 0) {
-                this.populateCalendar(allData);
-                this.hideLoading();
-                if (window.innerWidth <= 768) {
-                    if (this.isInitialLoad || this.shouldScrollToToday) {
-                        this.scrollToToday();
-                        this.isInitialLoad = false;
-                        this.shouldScrollToToday = false;
-                    }
-                }
-            } else {
+            const results = await Promise.allSettled(yearsNeeded.map(year => this.loadYearData(year)));
+            if (token !== this.loadToken) return;
+
+            const allData = Object.assign({}, ...results.filter(r => r.status === 'fulfilled').map(r => r.value));
+            if (Object.keys(allData).length === 0) {
                 this.showError('No liturgical data available for this period.');
+                return;
+            }
+
+            this.populateCalendar(allData);
+            this.hideLoading();
+            if (window.innerWidth <= 768 && (this.isInitialLoad || this.shouldScrollToToday)) {
+                this.scrollToToday();
+                this.isInitialLoad = false;
+                this.shouldScrollToToday = false;
             }
         } catch (error) {
             console.error('Failed to load data:', error);
-            this.showError('Unable to load liturgical data. Please check your connection and try again.');
-        } finally {
-            this.isLoading = false;
+            if (token === this.loadToken) {
+                this.showError('Unable to load liturgical data. Please check your connection and try again.');
+            }
         }
     }
 
@@ -482,83 +348,19 @@ class ModernLiturgicalCalendar {
         }
     }
 
+    // One request per year; the /year endpoint returns the same day records as /month
     async fetchYearData(year) {
-        const yearData = {};
-        const monthPromises = [];
-
-        for (let month = 1; month <= 12; month++) {
-            monthPromises.push(this.fetchMonthData(year, month));
-        }
-
-        const results = await Promise.allSettled(monthPromises);
-
-        results.forEach((result) => {
-            if (result.status === 'fulfilled' && result.value && result.value.days) {
-                result.value.days.forEach(day => {
-                    const dateKey = day.date || day.date_str;
-                    if (dateKey) {
-                        yearData[dateKey] = day;
-                    }
-                });
-            }
-        });
-
-        return yearData;
+        const response = await fetch(`${this.apiBaseUrl}/year/${year}`, { signal: AbortSignal.timeout(10000) });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const { calendar = [] } = await response.json();
+        return Object.fromEntries(calendar.map(day => [day.date, day]));
     }
 
-    async fetchMonthData(year, month) {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        try {
-            const url = `${this.apiBaseUrl}/month/${year}/${month}`;
-            const response = await fetch(url, { signal: controller.signal });
-            
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-                return await response.json();
-            } else {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-        } catch (error) {
-            clearTimeout(timeoutId);
-            throw error;
-        }
-    }
 
     populateCalendar(data) {
-        // Desktop calendar
-        document.querySelectorAll('.day-cell').forEach(cell => {
-            const dateKey = cell.dataset.date;
-            const dayData = data[dateKey];
-            this.populateCell(cell, dayData, false);
-            // Store dayData in cell for click handler
-            if (dayData) {
-                cell.dataset.dayData = JSON.stringify(dayData);
-                cell.style.cursor = 'pointer';
-                cell.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.showDayModal(cell, dayData);
-                });
-            }
-        });
-
-        // Mobile calendar
-        document.querySelectorAll('.mobile-day').forEach(day => {
-            const dateKey = day.dataset.date;
-            const dayData = data[dateKey];
-            this.populateCell(day, dayData, true);
-            // Store dayData in day for click handler
-            if (dayData) {
-                day.dataset.dayData = JSON.stringify(dayData);
-                day.style.cursor = 'pointer';
-                day.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.showDayModal(day, dayData);
-                });
-            }
-        });
+        this.monthData = data;
+        document.querySelectorAll('.day-cell').forEach(cell => this.populateCell(cell, data[cell.dataset.date], false));
+        document.querySelectorAll('.mobile-day').forEach(day => this.populateCell(day, data[day.dataset.date], true));
     }
 
     populateCell(element, dayData, isMobile) {
@@ -704,14 +506,9 @@ class ModernLiturgicalCalendar {
     hideLoading() {
         document.getElementById('loadingContainer').style.display = 'none';
         document.getElementById('errorContainer').style.display = 'none';
-        
-        if (window.innerWidth <= 768) {
-            document.getElementById('calendarWrapper').style.display = 'none';
-            document.getElementById('mobileView').style.display = 'flex';
-        } else {
-            document.getElementById('calendarWrapper').style.display = 'flex';
-            document.getElementById('mobileView').style.display = 'none';
-        }
+        // Clear inline display so the CSS media query picks desktop vs mobile (and follows resizes)
+        document.getElementById('calendarWrapper').style.display = '';
+        document.getElementById('mobileView').style.display = '';
     }
 
     showError(message) {
@@ -723,21 +520,6 @@ class ModernLiturgicalCalendar {
     }
 
 
-    refreshDisplay() {
-        const currentYear = this.currentDate.getFullYear();
-        const currentMonth = this.currentDate.getMonth();
-        const yearsNeeded = this.getYearsNeeded(currentYear, currentMonth);
-
-        const allData = {};
-        for (const year of yearsNeeded) {
-            const yearData = this.cache.get(year);
-            if (yearData) {
-                Object.assign(allData, yearData);
-            }
-        }
-
-        this.populateCalendar(allData);
-    }
 
     // Cache Management
     loadCacheFromStorage() {
