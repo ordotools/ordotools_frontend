@@ -72,7 +72,21 @@ button {
 
 .nav { display: flex; align-items: baseline; gap: 0.25rem; }
 
-.nav button {
+/* Diocese / language placeholders; margin-left pushes them and the nav to the right */
+.options { display: flex; gap: 0.5rem; margin-left: auto; }
+
+.options select {
+    appearance: none;
+    field-sizing: content;
+    font: inherit;
+    border: 0;
+    background: none;
+    color: var(--grey);
+    padding: 0.25rem 0.4rem;
+    cursor: pointer;
+}
+
+.nav button, .options select {
     padding: 0.25rem 0.6rem;
     font-size: 1.05rem;
     font-variant-caps: all-small-caps;
@@ -260,7 +274,8 @@ dd { margin: 0.1rem 0 0; }
 @media (max-width: 700px) {
     body { font-size: 16px; }
 
-    .header { padding: 1.25rem 1rem 0.75rem; }
+    .header { padding: 1.25rem 1rem 0.75rem; flex-wrap: wrap; row-gap: 0.25rem; }
+    .options { order: 1; margin-left: -0.4rem; width: 100%; }
     .title { font-size: 2rem; }
     main { padding: 0 1rem 2rem; }
 
